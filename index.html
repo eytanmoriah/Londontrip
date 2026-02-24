@@ -117,7 +117,8 @@
 const TRAVEL_DATE = new Date('2026-05-11T15:00:00').getTime();
 
 let state = { shopping: [], ukShopping: [], packing: [] };
-let tickets = []; // { id, name } — images live in IndexedDB, not here
+let tickets = [];     // { id, name } — images live in IndexedDB, not here
+let deletedIds = [];  // tombstone list — ids permanently deleted, never re-added by merge
 let tempImg = null;
 
 // =============================================================
@@ -169,7 +170,7 @@ function getAllImageIds() {
 // LOCAL STATE — localStorage for lists, IndexedDB for images
 // =============================================================
 function saveLocal() {
-  try { localStorage.setItem('ldn_v8', JSON.stringify({ state, tickets })); } catch(e) {}
+  try { localStorage.setItem('ldn_v8', JSON.stringify({ state, tickets, deletedIds })); } catch(e) {}
 }
 
 async function loadLocal() {
@@ -178,6 +179,7 @@ async function loadLocal() {
     const d = JSON.parse(raw);
     state = d.state || state;
     tickets = d.tickets || [];
+    deletedIds = d.deletedIds || [];
   }
   await renderTicketsWithImages();
   render();
@@ -252,11 +254,11 @@ async function syncToCloud() {
       if (r.ok) { const d = await r.json(); cloudTickets = d.tickets || []; }
     } catch(e) {}
 
-    // Merge: union of cloud + local tickets (additive, keep all)
+    // Merge: union of cloud + local tickets, tombstones excluded
     const merged = mergeTickets(cloudTickets, tickets);
 
-    // 2. Upload merged manifest
-    const payload = { ...state, tickets: merged.map(t => ({ id: t.id, name: t.name })) };
+    // 2. Upload merged manifest (include deletedIds so other devices respect deletions)
+    const payload = { ...state, tickets: merged.map(t => ({ id: t.id, name: t.name })), deletedIds };
     const res = await dbxUpload(token, '/trip_data.json', JSON.stringify(payload));
     if (!res.ok) { setStatus('☁️ Sync Error ❌'); return; }
 
@@ -290,12 +292,16 @@ async function syncFromCloud() {
     if (!res.ok) { setStatus('☁️ No cloud data yet'); return; }
     const data = await res.json();
 
-    // 2. Merge lists (cloud wins for shopping/packing — last write wins is fine for lists)
+    // 2. Merge lists
     if (data.shopping)   state.shopping   = data.shopping;
     if (data.ukShopping) state.ukShopping = data.ukShopping;
     if (data.packing)    state.packing    = data.packing;
 
-    // 3. ADDITIVE merge of tickets — keep everything from both cloud and local
+    // Merge tombstones — union of cloud + local deleted ids
+    const cloudDeleted = data.deletedIds || [];
+    deletedIds = [...new Set([...deletedIds, ...cloudDeleted].map(String))];
+
+    // 3. ADDITIVE merge of tickets — tombstones are filtered inside mergeTickets
     const cloudTickets = data.tickets || [];
     tickets = mergeTickets(cloudTickets, tickets);
 
@@ -325,11 +331,13 @@ async function syncFromCloud() {
   }
 }
 
-// Merge two ticket arrays by id — union, no duplicates, preserves order (oldest first)
+// Merge two ticket arrays by id — union, no duplicates, preserves order (oldest first).
+// Any id in deletedIds is excluded — tombstones always win.
 function mergeTickets(a, b) {
+  const dead = new Set(deletedIds.map(String));
   const seen = new Map();
   for (const t of [...a, ...b]) {
-    if (!seen.has(t.id)) seen.set(t.id, t);
+    if (!dead.has(String(t.id)) && !seen.has(t.id)) seen.set(t.id, t);
   }
   return Array.from(seen.values()).sort((x, y) => x.id - y.id);
 }
@@ -437,6 +445,7 @@ async function deleteTicket(id) {
   if (!confirm(`Delete "${name}"? This will remove it from all devices.`)) return;
 
   tickets = tickets.filter(t => t.id !== id);
+  deletedIds = [...new Set([...deletedIds, String(id)])]; // tombstone so merge never re-adds it
   await deleteImage(id); // remove from local IndexedDB
 
   // Remove from Dropbox immediately (don't wait for debounced sync)
