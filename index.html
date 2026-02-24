@@ -48,12 +48,12 @@
   .input-row { display: flex; gap: 10px; margin-bottom: 16px; }
   input[type="text"] { flex: 1; padding: 10px 16px; background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); border-radius: 10px; color: #fff; outline: none; }
 
-  .shopping-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: rgba(255,255,255,0.07); border-radius: 10px; margin-bottom: 8px; }
-  .shopping-item.checked { opacity: 0.5; text-decoration: line-through; }
+  .item-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: rgba(255,255,255,0.07); border-radius: 10px; margin-bottom: 8px; }
+  .item-row.checked { opacity: 0.5; text-decoration: line-through; }
   .item-name { flex: 1; }
   .item-delete { background: none; border: none; color: rgba(255,255,255,0.4); cursor: pointer; }
 
-  .ticket-card { background: rgba(255,255,255,0.07); border-radius: 12px; padding: 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 14px; }
+  .ticket-card { background: rgba(255,255,255,0.07); border-radius: 12px; padding: 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 14px; cursor: pointer;}
   .ticket-thumb { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; }
   
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 999; align-items: center; justify-content: center; }
@@ -76,7 +76,7 @@
     <div id="syncStatus" style="font-size: 0.8rem; color: var(--text-muted);">Ready</div>
     <div style="display:flex; gap: 10px;">
       <button class="btn btn-glass btn-sm" style="font-size:0.7rem;" onclick="requestNotifPermission()">🔔 Enable Notifications</button>
-      <button class="btn btn-glass btn-sm" style="font-size:0.7rem;" onclick="syncFromCloud()">🔄 Sync</button>
+      <button class="btn btn-glass btn-sm" style="font-size:0.7rem;" onclick="syncFromCloud()">🔄 Refresh Cloud</button>
     </div>
   </div>
 
@@ -100,7 +100,7 @@
   <div class="glass">
     <div class="section-title">🛍️ Buy for Trip</div>
     <div class="input-row">
-      <input type="text" id="shopInput" placeholder="New item..." onkeydown="if(event.key==='Enter')addItem('shopping', 'shopInput')" />
+      <input type="text" id="shopInput" placeholder="Add items to buy..." onkeydown="if(event.key==='Enter')addItem('shopping', 'shopInput')" />
       <button class="btn btn-red" onclick="addItem('shopping', 'shopInput')">+ Add</button>
     </div>
     <div id="shopList"></div>
@@ -109,7 +109,7 @@
   <div class="glass">
     <div class="section-title">🇬🇧 Shopping in the UK</div>
     <div class="input-row">
-      <input type="text" id="ukShopInput" placeholder="New item..." onkeydown="if(event.key==='Enter')addItem('ukShopping', 'ukShopInput')" />
+      <input type="text" id="ukShopInput" placeholder="Things to get in London..." onkeydown="if(event.key==='Enter')addItem('ukShopping', 'ukShopInput')" />
       <button class="btn btn-red" onclick="addItem('ukShopping', 'ukShopInput')">+ Add</button>
     </div>
     <div id="ukShopList"></div>
@@ -118,7 +118,7 @@
   <div class="glass">
     <div class="section-title">📦 Packing List</div>
     <div class="input-row">
-      <input type="text" id="packInput" placeholder="New item..." onkeydown="if(event.key==='Enter')addItem('packing', 'packInput')" />
+      <input type="text" id="packInput" placeholder="Items to pack..." onkeydown="if(event.key==='Enter')addItem('packing', 'packInput')" />
       <button class="btn btn-red" onclick="addItem('packing', 'packInput')">+ Add</button>
     </div>
     <div id="packList"></div>
@@ -142,14 +142,61 @@
 
 <script>
 const TRAVEL_DATE = new Date('2026-05-11T15:00:00');
-const DROPBOX_FILE = '/trip_data.json';
+const DROPBOX_PATH = '/trip_data.json';
 let state = { shopping: [], ukShopping: [], packing: [], tickets: [] };
 let pendingTicketImage = null;
 
-// ========= CORE LOGIC =========
-function saveLocal() { localStorage.setItem('london_trip_v4', JSON.stringify(state)); }
+// ========= ORIGINAL DROPBOX LOGIC =========
+function getToken() { return localStorage.getItem('dropbox_token'); }
+
+async function syncToCloud() {
+  const token = getToken();
+  if (!token) return;
+  document.getElementById('syncStatus').textContent = 'Saving...';
+  try {
+    await fetch('https://content.dropboxapi.com/2/files/upload', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/octet-stream',
+        'Dropbox-API-Arg': JSON.stringify({ path: DROPBOX_PATH, mode: 'overwrite' })
+      },
+      body: JSON.stringify(state)
+    });
+    document.getElementById('syncStatus').textContent = 'Cloud Synced ✅';
+  } catch (e) { document.getElementById('syncStatus').textContent = 'Sync Error ❌'; }
+}
+
+async function syncFromCloud() {
+  const token = getToken();
+  if (!token) return;
+  document.getElementById('syncStatus').textContent = 'Refreshing...';
+  try {
+    const res = await fetch('https://content.dropboxapi.com/2/files/download', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Dropbox-API-Arg': JSON.stringify({ path: DROPBOX_PATH })
+      }
+    });
+    if (res.ok) {
+      state = await res.json();
+      saveLocal();
+      render();
+      document.getElementById('syncStatus').textContent = 'Cloud Synced ✅';
+    }
+  } catch (e) { document.getElementById('syncStatus').textContent = 'Sync Error ❌'; }
+}
+
+function saveToken() {
+  const t = document.getElementById('tokenInput').value.trim();
+  if(t) { localStorage.setItem('dropbox_token', t); syncFromCloud(); }
+}
+
+// ========= LIST MANAGEMENT =========
+function saveLocal() { localStorage.setItem('london_trip_data', JSON.stringify(state)); }
 function loadLocal() { 
-    const raw = localStorage.getItem('london_trip_v4'); 
+    const raw = localStorage.getItem('london_trip_data'); 
     if (raw) state = JSON.parse(raw); 
     render(); 
 }
@@ -181,7 +228,28 @@ function deleteItem(listKey, id) {
   saveAndSync();
 }
 
-// ========= TICKETS =========
+function saveAndSync() { saveLocal(); render(); syncToCloud(); }
+
+// ========= NOTIFICATIONS =========
+function requestNotifPermission() {
+  Notification.requestPermission().then(permission => {
+    if (permission === "granted") new Notification("Notifications Enabled!");
+  });
+}
+
+function checkMorningNotification() {
+  const now = new Date();
+  const lastSent = localStorage.getItem('last_morning_notif');
+  if (now.getHours() === 9 && lastSent !== now.toDateString()) {
+    if (Notification.permission === "granted") {
+      const days = Math.floor((TRAVEL_DATE - now) / 86400000);
+      new Notification("Good Morning!", { body: `Only ${days} days until London! 🇬🇧` });
+      localStorage.setItem('last_morning_notif', now.toDateString());
+    }
+  }
+}
+
+// ========= UI RENDER =========
 function handleTicketFile() {
   const file = document.getElementById('ticketFile').files[0];
   const reader = new FileReader();
@@ -191,81 +259,18 @@ function handleTicketFile() {
 
 function addTicket() {
   const name = document.getElementById('ticketName').value.trim();
-  if (!name) return;
+  if (!name || !pendingTicketImage) return;
   state.tickets.push({ id: Date.now(), name, imageData: pendingTicketImage });
   document.getElementById('ticketName').value = '';
   pendingTicketImage = null;
   saveAndSync();
 }
 
-// ========= DROPBOX =========
-function saveToken() {
-  localStorage.setItem('dropbox_token', document.getElementById('tokenInput').value.trim());
-  syncFromCloud();
-}
-
-async function syncToCloud() {
-  const token = localStorage.getItem('dropbox_token');
-  if (!token) return;
-  document.getElementById('syncStatus').textContent = 'Cloud Saving...';
-  try {
-    await fetch('https://content.dropboxapi.com/2/files/upload', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/octet-stream', 'Dropbox-API-Arg': JSON.stringify({ path: DROPBOX_FILE, mode: 'overwrite' }) },
-      body: JSON.stringify(state)
-    });
-    document.getElementById('syncStatus').textContent = 'Cloud Synced ✅';
-  } catch (e) { document.getElementById('syncStatus').textContent = 'Sync Error ❌'; }
-}
-
-async function syncFromCloud() {
-  const token = localStorage.getItem('dropbox_token');
-  if (!token) return;
-  try {
-    const res = await fetch('https://content.dropboxapi.com/2/files/download', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}`, 'Dropbox-API-Arg': JSON.stringify({ path: DROPBOX_FILE }) }
-    });
-    if (res.ok) { state = await res.json(); saveLocal(); render(); }
-  } catch (e) { console.error(e); }
-}
-
-function saveAndSync() { saveLocal(); render(); syncToCloud(); }
-
-// ========= NOTIFICATIONS =========
-function requestNotifPermission() {
-  Notification.requestPermission().then(permission => {
-    if (permission === "granted") {
-      new Notification("London Trip", { body: "Morning countdown notifications enabled!" });
-    }
-  });
-}
-
-function checkMorningNotification() {
-  const now = new Date();
-  const lastSent = localStorage.getItem('last_morning_notif');
-  const todayStr = now.toDateString();
-
-  // If it's between 9:00 AM and 10:00 AM and we haven't sent one today
-  if (now.getHours() === 9 && lastSent !== todayStr) {
-    if (Notification.permission === "granted") {
-      const diff = TRAVEL_DATE - now;
-      const days = Math.floor(diff / 86400000);
-      new Notification("Good Morning!", {
-        body: `Only ${days} days until London! 🇬🇧`,
-        icon: "data:image/svg+xml;base64,..."
-      });
-      localStorage.setItem('last_morning_notif', todayStr);
-    }
-  }
-}
-
-// ========= UI RENDER =========
 function render() {
   const lists = [{k:'shopping', e:'shopList'}, {k:'ukShopping', e:'ukShopList'}, {k:'packing', e:'packList'}];
   lists.forEach(l => {
     document.getElementById(l.e).innerHTML = state[l.k].map(i => `
-      <div class="shopping-item ${i.checked ? 'checked' : ''}">
+      <div class="item-row ${i.checked ? 'checked' : ''}">
         <input type="checkbox" ${i.checked ? 'checked' : ''} onchange="toggleItem('${l.k}', ${i.id})">
         <span class="item-name">${i.name}</span>
         <button class="item-delete" onclick="deleteItem('${l.k}', ${i.id})">✕</button>
@@ -288,11 +293,13 @@ function updateCountdown() {
   document.getElementById('cdMins').textContent = Math.floor((diff % 3600000) / 60000);
 }
 
-// Init
 loadLocal();
-if (localStorage.getItem('dropbox_token')) syncFromCloud();
+if (getToken()) {
+    document.getElementById('tokenInput').value = getToken();
+    syncFromCloud();
+}
 setInterval(updateCountdown, 1000);
-setInterval(checkMorningNotification, 60000 * 30); // Check every 30 mins
+setInterval(checkMorningNotification, 60000 * 30);
 updateCountdown();
 checkMorningNotification();
 </script>
