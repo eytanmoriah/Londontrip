@@ -71,11 +71,82 @@
   @keyframes confettiFall { to { top: 110vh; transform: rotate(720deg) translateX(var(--drift)); } }
 
   /* ---- NOTES ---- */
-  .notes-saved { font-size: 0.75rem; color: rgba(255,255,255,0.4); margin-top: 6px; text-align: right; }
+  .notes-saved { font-size: 0.75rem; color: rgba(255,255,255,0.4); text-align: right; }
 
   /* ---- SECTION HEADERS ---- */
   .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
   .section-header h3 { margin: 0; }
+
+  /* ============================================
+     STATIC TOP AREA
+  ============================================ */
+  .top-area {
+    position: sticky; top: 0; z-index: 50;
+    background: linear-gradient(to bottom, rgba(10,10,26,0.98) 80%, transparent);
+    padding: 16px 0 0;
+    margin-bottom: 0;
+  }
+
+  /* ============================================
+     TAB NAV — fixed bottom bar on mobile
+  ============================================ */
+  .tab-bar {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+    background: rgba(10,10,26,0.97);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    padding: 0;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .tab-btn {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    gap: 4px; padding: 10px 4px 8px;
+    border: none; background: none; color: rgba(255,255,255,0.4);
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    font-size: 0.65rem; font-weight: 500; letter-spacing: 0.3px;
+    transition: color 0.2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tab-btn .tab-icon { font-size: 1.4rem; line-height: 1; transition: transform 0.2s; }
+  .tab-btn.active { color: #fff; }
+  .tab-btn.active .tab-icon { transform: translateY(-2px); }
+  .tab-btn::after {
+    content: ''; display: block;
+    width: 24px; height: 3px; border-radius: 2px;
+    background: var(--red);
+    opacity: 0; transform: scaleX(0);
+    transition: opacity 0.2s, transform 0.2s;
+    margin-top: 2px;
+  }
+  .tab-btn.active::after { opacity: 1; transform: scaleX(1); }
+
+  /* ============================================
+     TAB PANELS — swipeable slider
+  ============================================ */
+  .tabs-viewport {
+    overflow: hidden;
+    /* leave room for fixed tab bar */
+    padding-bottom: calc(70px + env(safe-area-inset-bottom));
+  }
+  .tabs-slider {
+    display: flex;
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+  }
+  .tab-panel {
+    min-width: 100%;
+    padding: 16px 0 0;
+  }
+
+  /* swipe hint on load */
+  @keyframes swipeHint {
+    0%   { transform: translateX(0); }
+    30%  { transform: translateX(-18px); }
+    60%  { transform: translateX(0); }
+    100% { transform: translateX(0); }
+  }
+  .swipe-hint { animation: swipeHint 1.2s ease 1.5s both; }
 </style>
 </head>
 <body>
@@ -83,146 +154,182 @@
 <div class="airplane">✈️</div>
 <canvas id="confettiCanvas" style="position:fixed;inset:0;z-index:9998;pointer-events:none;display:none;"></canvas>
 
-<div class="container">
-  <!-- HEADER -->
-  <div class="header">
-    <h1>London<span>.</span></h1>
-    <p id="headerSub">May 11, 2026</p>
-  </div>
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- STATIC TOP — always visible, never scrolls away    -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="top-area">
+  <div style="max-width:800px;margin:0 auto;padding:0 20px;">
 
-  <!-- ARRIVED BANNER (shown when date is reached) -->
-  <div class="arrived-banner" id="arrivedBanner">🎉 You're in London! Enjoy every moment! 🇬🇧</div>
+    <!-- HEADER -->
+    <div class="header" style="margin:10px 0 14px;">
+      <h1>London<span>.</span></h1>
+      <p id="headerSub" style="opacity:0.7;margin-top:4px;">May 11, 2026</p>
+    </div>
 
-  <!-- STATUS BAR -->
-  <div class="glass" style="display:flex;justify-content:space-between;align-items:center;padding:15px;">
-    <div>
-      <div id="londonTemp" style="font-size:1.5rem;font-weight:700;">--°C</div>
-      <div id="londonSky" style="font-size:0.8rem;color:rgba(255,255,255,0.6);">London Weather</div>
-    </div>
-    <div style="text-align:right;">
-      <div id="syncStatus" style="font-size:0.75rem;color:#00ff00;">Cloud Ready</div>
-      <div id="notifStatus" style="font-size:0.75rem;color:rgba(255,255,255,0.5);">Alerts: Off</div>
-    </div>
-  </div>
+    <!-- ARRIVED BANNER -->
+    <div class="arrived-banner" id="arrivedBanner">🎉 You're in London! Enjoy every moment! 🇬🇧</div>
 
-  <!-- SYNC -->
-  <div class="glass">
-    <div class="input-row">
-      <input type="text" id="tokenInput" placeholder="Dropbox Token">
-      <button class="btn btn-red" onclick="saveToken()">Sync</button>
-    </div>
-    <button class="btn btn-glass" style="width:100%;" onclick="requestNotifPermission()">🔔 Enable Morning Countdown</button>
-  </div>
-
-  <!-- COUNTDOWN -->
-  <div class="glass" id="countdownCard">
-    <div class="countdown-grid">
-      <div><span class="num" id="cdDays">--</span><div style="font-size:0.7rem;">DAYS</div></div>
-      <div><span class="num" id="cdHours">--</span><div style="font-size:0.7rem;">HOURS</div></div>
-      <div><span class="num" id="cdMins">--</span><div style="font-size:0.7rem;">MINS</div></div>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════ -->
-  <!-- FEATURE 2: ITINERARY                        -->
-  <!-- ═══════════════════════════════════════════ -->
-  <div class="glass">
-    <div class="section-header">
-      <h3>🗓️ Itinerary</h3>
-      <button class="btn btn-sm btn-red" onclick="showAddEvent()">+ Add</button>
-    </div>
-    <div class="day-tabs" id="dayTabs"></div>
-    <div id="itineraryList"></div>
-    <!-- Add event form (hidden by default) -->
-    <div id="eventForm" style="display:none; margin-top:12px; padding-top:12px; border-top:1px solid var(--glass-border);">
-      <div class="input-row">
-        <select id="evDay" style="flex:0 0 auto; width:auto;"></select>
-        <input type="time" id="evTime" style="flex:0 0 120px;">
-        <input type="text" id="evTitle" placeholder="Title (e.g. Tower of London)">
+    <!-- WEATHER + SYNC STATUS -->
+    <div class="glass" style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;margin-bottom:12px;">
+      <div>
+        <div id="londonTemp" style="font-size:1.4rem;font-weight:700;">--°C</div>
+        <div id="londonSky" style="font-size:0.78rem;color:rgba(255,255,255,0.6);">London Weather</div>
       </div>
-      <div class="input-row">
-        <input type="text" id="evNote" placeholder="Note (optional, e.g. Book tickets in advance)">
-      </div>
-      <div style="display:flex;gap:8px;">
-        <button class="btn btn-red" onclick="saveEvent()">Save</button>
-        <button class="btn btn-glass" onclick="cancelEvent()">Cancel</button>
+      <div style="text-align:right;">
+        <div id="syncStatus" style="font-size:0.75rem;color:#00ff00;">Cloud Ready</div>
+        <div id="notifStatus" style="font-size:0.75rem;color:rgba(255,255,255,0.5);">Alerts: Off</div>
       </div>
     </div>
-  </div>
 
-  <!-- ═══════════════════════════════════════════ -->
-  <!-- LISTS                                       -->
-  <!-- ═══════════════════════════════════════════ -->
-  <div class="glass">
-    <h3 style="margin-bottom:15px">🛍️ Buy for Trip</h3>
-    <div class="input-row"><input type="text" id="shopInput"><button class="btn btn-red" onclick="addItem('shopping','shopInput')">Add</button></div>
-    <div id="shopList"></div>
-  </div>
-  <div class="glass">
-    <h3 style="margin-bottom:15px">🇬🇧 Shopping in UK</h3>
-    <div class="input-row"><input type="text" id="ukShopInput"><button class="btn btn-red" onclick="addItem('ukShopping','ukShopInput')">Add</button></div>
-    <div id="ukShopList"></div>
-  </div>
-  <div class="glass">
-    <h3 style="margin-bottom:15px">📦 Packing List</h3>
-    <div class="input-row"><input type="text" id="packInput"><button class="btn btn-red" onclick="addItem('packing','packInput')">Add</button></div>
-    <div id="packList"></div>
-  </div>
+    <!-- SYNC TOKEN -->
+    <div class="glass" style="padding:14px 18px;margin-bottom:12px;">
+      <div class="input-row" style="margin-bottom:10px;">
+        <input type="text" id="tokenInput" placeholder="Dropbox Token">
+        <button class="btn btn-red" onclick="saveToken()">Sync</button>
+      </div>
+      <button class="btn btn-glass" style="width:100%;font-size:0.85rem;" onclick="requestNotifPermission()">🔔 Enable Morning Alerts</button>
+    </div>
 
-  <!-- TICKET VAULT -->
-  <div class="glass">
-    <h3 style="margin-bottom:15px">🎟️ Ticket Vault</h3>
-    <div class="input-row">
-      <input type="text" id="ticketName" placeholder="Ticket Name">
-      <input type="file" id="ticketFile" accept="image/*" capture="camera" style="display:none" onchange="processTicket(this, 'ticket')">
-      <button class="btn btn-glass" onclick="document.getElementById('ticketFile').click()">📷 Photo</button>
-      <button class="btn btn-red" onclick="addTicket()">Save</button>
-    </div>
-    <div id="photoPreview" style="margin-bottom:10px;display:none;">
-      <img id="previewImg" style="height:60px;border-radius:8px;border:1px solid var(--glass-border);">
-      <span style="font-size:0.8rem;margin-left:10px;opacity:0.7;">Photo ready ✅</span>
-    </div>
-    <div id="ticketList"></div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════ -->
-  <!-- FEATURE 4: SHARED NOTES                     -->
-  <!-- ═══════════════════════════════════════════ -->
-  <div class="glass">
-    <div class="section-header">
-      <h3>📝 Shared Notes</h3>
-      <span id="notesSavedLabel" class="notes-saved"></span>
-    </div>
-    <textarea id="notesArea" placeholder="Hotel confirmation, addresses, things to remember…"></textarea>
-    <div style="margin-top:10px; display:flex; gap:8px;">
-      <button class="btn btn-red" onclick="saveNotes()">Save Notes</button>
-      <span style="font-size:0.8rem;opacity:0.5;align-self:center;">Syncs to all devices</span>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════ -->
-  <!-- FEATURE 5: PHOTO MEMORIES                   -->
-  <!-- ═══════════════════════════════════════════ -->
-  <div class="glass">
-    <div class="section-header">
-      <h3>📸 Memories</h3>
-      <div style="display:flex;gap:8px;">
-        <input type="file" id="memFile" accept="image/*" capture="camera" style="display:none" onchange="processTicket(this, 'memory')">
-        <button class="btn btn-sm btn-red" onclick="document.getElementById('memFile').click()">+ Photo</button>
+    <!-- COUNTDOWN -->
+    <div class="glass" id="countdownCard" style="padding:18px;margin-bottom:0;">
+      <div class="countdown-grid">
+        <div><span class="num" id="cdDays">--</span><div style="font-size:0.65rem;opacity:0.6;letter-spacing:1px;text-transform:uppercase;">Days</div></div>
+        <div><span class="num" id="cdHours">--</span><div style="font-size:0.65rem;opacity:0.6;letter-spacing:1px;text-transform:uppercase;">Hours</div></div>
+        <div><span class="num" id="cdMins">--</span><div style="font-size:0.65rem;opacity:0.6;letter-spacing:1px;text-transform:uppercase;">Mins</div></div>
       </div>
     </div>
-    <div id="memoriesGrid" class="memories-grid"></div>
-    <div id="memPreviewRow" style="display:none;margin-top:10px;">
-      <img id="memPreviewImg" style="height:70px;border-radius:8px;border:1px solid var(--glass-border);">
-      <div class="input-row" style="margin-top:8px;">
-        <input type="text" id="memCaption" placeholder="Caption (optional)">
-        <button class="btn btn-red" onclick="addMemory()">Add</button>
-        <button class="btn btn-glass" onclick="cancelMemory()">✕</button>
-      </div>
-    </div>
-  </div>
 
-</div><!-- /container -->
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- SWIPEABLE TAB CONTENT                              -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="tabs-viewport" style="max-width:800px;margin:0 auto;padding-left:20px;padding-right:20px;">
+  <div class="tabs-slider swipe-hint" id="tabsSlider">
+
+    <!-- ── TAB 1: PREP ── -->
+    <div class="tab-panel" id="panel-0">
+
+      <div class="glass">
+        <h3 style="margin-bottom:15px">🛍️ Buy Before Trip</h3>
+        <div class="input-row"><input type="text" id="shopInput" placeholder="Add item…"><button class="btn btn-red" onclick="addItem('shopping','shopInput')">Add</button></div>
+        <div id="shopList"></div>
+      </div>
+
+      <div class="glass">
+        <h3 style="margin-bottom:15px">📦 Packing List</h3>
+        <div class="input-row"><input type="text" id="packInput" placeholder="Add item…"><button class="btn btn-red" onclick="addItem('packing','packInput')">Add</button></div>
+        <div id="packList"></div>
+      </div>
+
+      <div class="glass">
+        <h3 style="margin-bottom:15px">🇬🇧 Shopping in UK</h3>
+        <div class="input-row"><input type="text" id="ukShopInput" placeholder="Add item…"><button class="btn btn-red" onclick="addItem('ukShopping','ukShopInput')">Add</button></div>
+        <div id="ukShopList"></div>
+      </div>
+
+      <div class="glass">
+        <div class="section-header">
+          <h3>📝 Shared Notes</h3>
+          <span id="notesSavedLabel" class="notes-saved"></span>
+        </div>
+        <textarea id="notesArea" placeholder="Hotel confirmation, addresses, things to remember…"></textarea>
+        <div style="margin-top:10px;display:flex;gap:8px;align-items:center;">
+          <button class="btn btn-red" onclick="saveNotes()">Save Notes</button>
+          <span style="font-size:0.8rem;opacity:0.45;">Syncs to all devices</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── TAB 2: TRIP ── -->
+    <div class="tab-panel" id="panel-1">
+
+      <div class="glass">
+        <div class="section-header">
+          <h3>🗓️ Itinerary</h3>
+          <button class="btn btn-sm btn-red" onclick="showAddEvent()">+ Add</button>
+        </div>
+        <div class="day-tabs" id="dayTabs"></div>
+        <div id="itineraryList"></div>
+        <div id="eventForm" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--glass-border);">
+          <div class="input-row">
+            <select id="evDay" style="flex:0 0 auto;width:auto;"></select>
+            <input type="time" id="evTime" style="flex:0 0 120px;">
+            <input type="text" id="evTitle" placeholder="Title (e.g. Tower of London)">
+          </div>
+          <div class="input-row">
+            <input type="text" id="evNote" placeholder="Note (optional)">
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-red" onclick="saveEvent()">Save</button>
+            <button class="btn btn-glass" onclick="cancelEvent()">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass">
+        <h3 style="margin-bottom:15px">🎟️ Ticket Vault</h3>
+        <div class="input-row">
+          <input type="text" id="ticketName" placeholder="Ticket name…">
+          <input type="file" id="ticketFile" accept="image/*" capture="camera" style="display:none" onchange="processTicket(this,'ticket')">
+          <button class="btn btn-glass" onclick="document.getElementById('ticketFile').click()">📷</button>
+          <button class="btn btn-red" onclick="addTicket()">Save</button>
+        </div>
+        <div id="photoPreview" style="margin-bottom:10px;display:none;display:flex;align-items:center;gap:10px;">
+          <img id="previewImg" style="height:56px;border-radius:8px;border:1px solid var(--glass-border);">
+          <span style="font-size:0.8rem;opacity:0.7;">Photo ready ✅</span>
+        </div>
+        <div id="ticketList"></div>
+      </div>
+
+    </div>
+
+    <!-- ── TAB 3: MEMORIES ── -->
+    <div class="tab-panel" id="panel-2">
+
+      <div class="glass">
+        <div class="section-header">
+          <h3>📸 Memories</h3>
+          <div>
+            <input type="file" id="memFile" accept="image/*" capture="camera" style="display:none" onchange="processTicket(this,'memory')">
+            <button class="btn btn-sm btn-red" onclick="document.getElementById('memFile').click()">+ Photo</button>
+          </div>
+        </div>
+        <div id="memPreviewRow" style="display:none;margin-bottom:14px;">
+          <img id="memPreviewImg" style="height:70px;border-radius:8px;border:1px solid var(--glass-border);">
+          <div class="input-row" style="margin-top:8px;">
+            <input type="text" id="memCaption" placeholder="Caption (optional)">
+            <button class="btn btn-red" onclick="addMemory()">Add</button>
+            <button class="btn btn-glass" onclick="cancelMemory()">✕</button>
+          </div>
+        </div>
+        <div id="memoriesGrid" class="memories-grid"></div>
+      </div>
+
+    </div>
+
+  </div><!-- /tabs-slider -->
+</div><!-- /tabs-viewport -->
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- BOTTOM TAB BAR                                     -->
+<!-- ═══════════════════════════════════════════════════ -->
+<nav class="tab-bar" id="tabBar">
+  <button class="tab-btn active" onclick="switchTab(0)" id="tab-0">
+    <span class="tab-icon">✈️</span>
+    <span>Prep</span>
+  </button>
+  <button class="tab-btn" onclick="switchTab(1)" id="tab-1">
+    <span class="tab-icon">🗓️</span>
+    <span>Trip</span>
+  </button>
+  <button class="tab-btn" onclick="switchTab(2)" id="tab-2">
+    <span class="tab-icon">📸</span>
+    <span>Memories</span>
+  </button>
+</nav>
 
 <!-- FULLSCREEN IMAGE MODAL -->
 <div class="modal" id="imgModal">
@@ -235,7 +342,7 @@
 // CONSTANTS
 // ================================================================
 const TRAVEL_DATE = new Date('2026-05-11T15:00:00').getTime();
-const TRIP_DAYS = ['May 11','May 12','May 13','May 14','May 15'];
+const TRIP_DAYS = ['May 11','May 12','May 13','May 14','May 15','May 16','May 17','May 18'];
 
 // ================================================================
 // STATE
@@ -839,6 +946,37 @@ function checkNotif() {
     }
   }
 }
+
+// ================================================================
+// TAB SWITCHING + SWIPE
+// ================================================================
+let currentTab = 0;
+
+function switchTab(index) {
+  currentTab = index;
+  document.getElementById('tabsSlider').style.transform = `translateX(${-index * 100}%)`;
+  document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', i === index);
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Touch swipe between tabs
+(function() {
+  let startX = 0, startY = 0;
+  const slider = document.getElementById('tabsSlider');
+  slider.addEventListener('touchstart', e => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+  slider.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx) * 0.8) return;
+    if (dx < 0 && currentTab < 2) switchTab(currentTab + 1);
+    if (dx > 0 && currentTab > 0) switchTab(currentTab - 1);
+  }, { passive: true });
+})();
 
 // ================================================================
 // STARTUP
