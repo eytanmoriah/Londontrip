@@ -24,7 +24,7 @@
   .btn { padding: 10px 18px; border: none; border-radius: 10px; cursor: pointer; font-weight: 500; font-family: 'DM Sans', sans-serif; transition: 0.2s; }
   .btn-red { background: var(--red); color: #fff; }
   .btn-glass { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid var(--glass-border); }
-  .input-row { display: flex; gap: 10px; margin-bottom: 15px; align-items: center; }
+  .input-row { display: flex; gap: 10px; margin-bottom: 15px; }
   input[type="text"] { flex: 1; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); border-radius: 10px; color: #fff; outline: none; }
   .item-row { display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 10px; margin-bottom: 8px; }
   .item-row.checked { opacity: 0.5; text-decoration: line-through; }
@@ -36,4 +36,259 @@
   .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center; }
   .airplane { position: fixed; top: 28px; left: -80px; font-size: 2rem; z-index: 100; animation: fly 15s linear infinite; }
   @keyframes fly { 0% { left: -80px; } 100% { left: 110vw; } }
-  #preUploadThumb { width: 40px; height: 40px; border-radius: 5px; object-fit: cover; display: none; border
+</style>
+</head>
+<body>
+
+<div class="bg"></div>
+<div class="airplane">✈️</div>
+
+<div class="container">
+  <div class="header">
+    <h1>London<span>.</span></h1>
+    <p>May 11, 2026</p>
+  </div>
+
+  <div class="glass" style="display: flex; justify-content: space-between; align-items: center; padding: 15px;">
+    <div>
+      <div id="londonTemp" style="font-size: 1.5rem; font-weight: 700;">--°C</div>
+      <div id="londonSky" style="font-size: 0.8rem; color: rgba(255,255,255,0.6);">London Weather</div>
+    </div>
+    <div style="text-align: right;">
+      <div id="syncStatus" style="font-size: 0.75rem; color: #00ff00;">Cloud Ready</div>
+      <div id="notifStatus" style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Alerts: Off</div>
+    </div>
+  </div>
+
+  <div class="glass">
+    <div class="input-row">
+      <input type="text" id="tokenInput" placeholder="Dropbox Token">
+      <button class="btn btn-red" onclick="saveToken()">Sync</button>
+    </div>
+    <button class="btn btn-glass" style="width:100%;" id="notifBtn" onclick="requestNotifPermission()">🔔 Enable Morning Countdown</button>
+  </div>
+
+  <div class="glass">
+    <div class="countdown-grid">
+      <div><span class="num" id="cdDays">--</span><div style="font-size:0.7rem;">DAYS</div></div>
+      <div><span class="num" id="cdHours">--</span><div style="font-size:0.7rem;">HOURS</div></div>
+      <div><span class="num" id="cdMins">--</span><div style="font-size:0.7rem;">MINS</div></div>
+    </div>
+  </div>
+
+  <div class="glass">
+    <h3 style="margin-bottom:15px">🛍️ Buy for Trip</h3>
+    <div class="input-row"><input type="text" id="shopInput"><button class="btn btn-red" onclick="addItem('shopping', 'shopInput')">Add</button></div>
+    <div id="shopList"></div>
+  </div>
+
+  <div class="glass">
+    <h3 style="margin-bottom:15px">🇬🇧 Shopping in UK</h3>
+    <div class="input-row"><input type="text" id="ukShopInput"><button class="btn btn-red" onclick="addItem('ukShopping', 'ukShopInput')">Add</button></div>
+    <div id="ukShopList"></div>
+  </div>
+
+  <div class="glass">
+    <h3 style="margin-bottom:15px">📦 Packing List</h3>
+    <div class="input-row"><input type="text" id="packInput"><button class="btn btn-red" onclick="addItem('packing', 'packInput')">Add</button></div>
+    <div id="packList"></div>
+  </div>
+
+  <div class="glass">
+    <h3 style="margin-bottom:15px">🎟️ Ticket Vault</h3>
+    <div class="input-row">
+      <input type="text" id="ticketName" placeholder="Ticket Name">
+      <input type="file" id="ticketFile" accept="image/*" capture="camera" style="display:none" onchange="processTicket(this)">
+      <button class="btn btn-glass" onclick="document.getElementById('ticketFile').click()">📷 Camera/Photo</button>
+      <button class="btn btn-red" onclick="addTicket()">Save</button>
+    </div>
+    <div id="ticketList"></div>
+  </div>
+
+<div class="modal" id="imgModal" onclick="this.style.display='none'"><img id="fullImg" style="max-width:95%; max-height:95%;"></div>
+
+<script>
+const TRAVEL_DATE = new Date('2026-05-11T15:00:00').getTime();
+let state = { shopping: [], ukShopping: [], packing: [], tickets: [] };
+let tempImg = null;
+
+// --- WEATHER ---
+async function fetchWeather() {
+  try {
+    const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=51.5074&longitude=-0.1278&current_weather=true');
+    const data = await res.json();
+    document.getElementById('londonTemp').textContent = Math.round(data.current_weather.temperature) + '°C';
+  } catch (e) { console.error("Weather error"); }
+}
+
+// --- DROPBOX SYNC (Original Logic) ---
+async function syncToCloud() {
+  const token = localStorage.getItem('dropbox_token');
+  if (!token) return;
+  try {
+    const response = await fetch('https://content.dropboxapi.com/2/files/upload', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Dropbox-API-Arg': JSON.stringify({ path: '/trip_data.json', mode: 'overwrite' }),
+        'Content-Type': 'application/octet-stream'
+      },
+      body: JSON.stringify(state)
+    });
+    document.getElementById('syncStatus').textContent = response.ok ? '☁️ Synced ✅' : '☁️ Sync Error ❌';
+  } catch (e) { document.getElementById('syncStatus').textContent = '☁️ Offline ❌'; }
+}
+
+async function syncFromCloud() {
+  const token = localStorage.getItem('dropbox_token');
+  if (!token) return;
+  try {
+    const res = await fetch('https://content.dropboxapi.com/2/files/download', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Dropbox-API-Arg': JSON.stringify({ path: '/trip_data.json' }) }
+    });
+    if (res.ok) { 
+      state = await res.json(); 
+      render(); 
+      saveLocal(); 
+      document.getElementById('syncStatus').textContent = '☁️ Connected ✅';
+    }
+  } catch (e) { console.error("Cloud download failed"); }
+}
+
+function saveToken() {
+  const t = document.getElementById('tokenInput').value.trim();
+  if(t) { localStorage.setItem('dropbox_token', t); syncFromCloud(); }
+}
+
+// --- CORE APP LOGIC ---
+function saveLocal() { localStorage.setItem('ldn_app_v5', JSON.stringify(state)); }
+function loadLocal() { const d = localStorage.getItem('ldn_app_v5'); if(d) state = JSON.parse(d); render(); }
+
+function addItem(key, inpId) {
+  const inp = document.getElementById(inpId);
+  if(!inp.value.trim()) return;
+  state[key].push({ id: Date.now(), name: inp.value.trim(), checked: false });
+  inp.value = ''; 
+  saveAndSync();
+}
+
+function toggleItem(key, id) {
+  const item = state[key].find(i => i.id === id);
+  if(item) {
+    item.checked = !item.checked;
+    if(key === 'shopping' && item.checked) {
+       if(confirm("Move this to Packing List?")) {
+         state.packing.push({ id: Date.now(), name: item.name, checked: false });
+         state.shopping = state.shopping.filter(i => i.id !== id);
+       }
+    }
+  }
+  saveAndSync();
+}
+
+function deleteItem(key, id) { 
+  state[key] = state[key].filter(i => i.id !== id); 
+  saveAndSync(); 
+}
+
+function saveAndSync() { saveLocal(); render(); syncToCloud(); }
+
+// --- TICKET VAULT ---
+function processTicket(input) {
+  const file = input.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      tempImg = e.target.result;
+      // Provide visual feedback that image is ready
+      document.getElementById('syncStatus').textContent = '📸 Photo Ready';
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+function addTicket() {
+  const nameInput = document.getElementById('ticketName');
+  if(!nameInput.value || !tempImg) { 
+    alert("Please enter a name and take/select a photo first!"); 
+    return; 
+  }
+  state.tickets.push({ id: Date.now(), name: nameInput.value, img: tempImg });
+  nameInput.value = ''; 
+  tempImg = null;
+  saveAndSync();
+}
+
+// --- UI RENDER ---
+function render() {
+  const configs = [
+    {k:'shopping', e:'shopList'}, 
+    {k:'ukShopping', e:'ukShopList'}, 
+    {k:'packing', e:'packList'}
+  ];
+  
+  configs.forEach(conf => {
+    const listEl = document.getElementById(conf.e);
+    if(!listEl) return;
+    listEl.innerHTML = state[conf.k].map(i => `
+      <div class="item-row ${i.checked ? 'checked' : ''}">
+        <input type="checkbox" ${i.checked ? 'checked' : ''} onchange="toggleItem('${conf.k}', ${i.id})">
+        <span class="item-name">${i.name}</span>
+        <button onclick="deleteItem('${conf.k}', ${i.id})" style="background:none; border:none; color:white; opacity:0.3">✕</button>
+      </div>`).join('');
+  });
+
+  document.getElementById('ticketList').innerHTML = (state.tickets || []).map(t => `
+    <div class="ticket-card" onclick="viewTicket('${t.img}')">
+      <img src="${t.img}" class="ticket-thumb">
+      <span>${t.name}</span>
+      <button onclick="event.stopPropagation(); deleteItem('tickets', ${t.id})" style="margin-left:auto; background:none; border:none; color:white; opacity:0.3">✕</button>
+    </div>`).join('');
+}
+
+function viewTicket(src) { document.getElementById('fullImg').src = src; document.getElementById('imgModal').style.display = 'flex'; }
+
+function updateCD() {
+  const diff = TRAVEL_DATE - new Date().getTime();
+  if(diff < 0) return;
+  document.getElementById('cdDays').textContent = Math.floor(diff / 86400000);
+  document.getElementById('cdHours').textContent = Math.floor((diff % 86400000) / 3600000);
+  document.getElementById('cdMins').textContent = Math.floor((diff % 3600000) / 60000);
+}
+
+// --- NOTIFICATIONS ---
+function requestNotifPermission() {
+  Notification.requestPermission().then(p => {
+    if (p === "granted") {
+      document.getElementById('notifStatus').textContent = 'Alerts: Active';
+      new Notification("London Trip", { body: "Morning countdown alerts enabled!" });
+    }
+  });
+}
+
+function checkNotif() {
+  const now = new Date();
+  if(now.getHours() === 9 && localStorage.getItem('last_notif') !== now.toDateString()) {
+    if(Notification.permission === 'granted') {
+      const days = Math.floor((TRAVEL_DATE - now.getTime()) / 86400000);
+      new Notification("Good Morning!", { body: `${days} days until London! 🇬🇧` });
+      localStorage.setItem('last_notif', now.toDateString());
+    }
+  }
+}
+
+// STARTUP
+loadLocal();
+fetchWeather();
+if(localStorage.getItem('dropbox_token')) {
+  document.getElementById('tokenInput').value = localStorage.getItem('dropbox_token');
+  syncFromCloud();
+}
+setInterval(updateCD, 1000);
+setInterval(checkNotif, 60000 * 15);
+updateCD();
+if(Notification.permission === 'granted') document.getElementById('notifStatus').textContent = 'Alerts: Active';
+</script>
+</body>
+</html>
