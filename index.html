@@ -256,7 +256,16 @@ function deleteItem(key, id) {
   saveAndSync();
 }
 
-function saveAndSync() { saveLocal(); render(); syncToCloud(); }
+// Debounced sync — waits 2s after the last change before hitting Dropbox.
+// This makes adds/deletes feel instant while still keeping the cloud up to date.
+let syncTimer = null;
+function saveAndSync() {
+  saveLocal();
+  render();
+  document.getElementById('syncStatus').textContent = '☁️ Pending…';
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(syncToCloud, 2000);
+}
 
 // --- TICKET VAULT ---
 function processTicket(input) {
