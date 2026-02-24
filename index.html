@@ -432,13 +432,30 @@ async function addTicket() {
 }
 
 async function deleteTicket(id) {
+  const ticket = tickets.find(t => t.id === id);
+  const name = ticket ? ticket.name : 'this ticket';
+  if (!confirm(`Delete "${name}"? This will remove it from all devices.`)) return;
+
   tickets = tickets.filter(t => t.id !== id);
-  await deleteImage(id);
+  await deleteImage(id); // remove from local IndexedDB
+
+  // Remove from Dropbox immediately (don't wait for debounced sync)
+  const token = localStorage.getItem('dropbox_token');
+  if (token) {
+    try {
+      await fetch('https://api.dropboxapi.com/2/files/delete_v2', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: `/tickets/${id}` })
+      });
+    } catch(e) { /* best-effort */ }
+  }
+
   saveLocal();
   await renderTicketsWithImages();
   setStatus('☁️ Pending…');
   clearTimeout(syncTimer);
-  syncTimer = setTimeout(syncToCloud, 2000);
+  syncTimer = setTimeout(syncToCloud, 2000); // also updates the manifest
 }
 
 async function viewTicket(id) {
