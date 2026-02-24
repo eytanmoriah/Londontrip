@@ -116,44 +116,90 @@
 <script>
 const TRAVEL_DATE = new Date('2026-05-11T15:00:00').getTime();
 
-// FIX: Separate tickets from main state to avoid localStorage quota issues with large images.
-// Tickets (with base64 images) are stored in a dedicated localStorage key via IndexedDB-like chunking.
-// We use a simple tickets map: id -> {id, name, img}
 let state = { shopping: [], ukShopping: [], packing: [] };
-let tickets = []; // stored separately
+let tickets = []; // { id, name } — images live in IndexedDB, not here
 let tempImg = null;
 
-// --- STORAGE HELPERS ---
+// =============================================================
+// INDEXEDDB — unlimited local image storage, no quota issues
+// =============================================================
+let db;
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('LondonTrip', 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore('images', { keyPath: 'id' });
+    req.onsuccess = e => { db = e.target.result; resolve(); };
+    req.onerror = reject;
+  });
+}
+function saveImage(id, dataUrl) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('images', 'readwrite');
+    tx.objectStore('images').put({ id, dataUrl });
+    tx.oncomplete = resolve;
+    tx.onerror = reject;
+  });
+}
+function getImage(id) {
+  return new Promise((resolve) => {
+    const tx = db.transaction('images', 'readonly');
+    const req = tx.objectStore('images').get(id);
+    req.onsuccess = () => resolve(req.result?.dataUrl || null);
+    req.onerror = () => resolve(null);
+  });
+}
+function deleteImage(id) {
+  return new Promise((resolve) => {
+    const tx = db.transaction('images', 'readwrite');
+    tx.objectStore('images').delete(id);
+    tx.oncomplete = resolve;
+    tx.onerror = resolve;
+  });
+}
+function getAllImageIds() {
+  return new Promise((resolve) => {
+    const tx = db.transaction('images', 'readonly');
+    const req = tx.objectStore('images').getAllKeys();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = () => resolve([]);
+  });
+}
+
+// =============================================================
+// LOCAL STATE — localStorage for lists, IndexedDB for images
+// =============================================================
 function saveLocal() {
-  try {
-    localStorage.setItem('ldn_app_v7', JSON.stringify(state));
-  } catch(e) {
-    console.error('State save failed', e);
-  }
+  try { localStorage.setItem('ldn_v8', JSON.stringify({ state, tickets })); } catch(e) {}
 }
 
-function saveTickets() {
-  // FIX: Save tickets separately. If quota exceeded, save without images as fallback.
-  try {
-    localStorage.setItem('ldn_tickets_v7', JSON.stringify(tickets));
-  } catch(e) {
-    // Quota exceeded — try saving without images
-    try {
-      const slim = tickets.map(t => ({ id: t.id, name: t.name, img: null }));
-      localStorage.setItem('ldn_tickets_v6', JSON.stringify(slim));
-      console.warn('Ticket images too large for localStorage; names saved, images lost on refresh.');
-    } catch(e2) {
-      console.error('Could not save tickets at all', e2);
-    }
+async function loadLocal() {
+  const raw = localStorage.getItem('ldn_v8');
+  if (raw) {
+    const d = JSON.parse(raw);
+    state = d.state || state;
+    tickets = d.tickets || [];
   }
-}
-
-function loadLocal() {
-  const d = localStorage.getItem('ldn_app_v7');
-  if (d) state = JSON.parse(d);
-  const t = localStorage.getItem('ldn_tickets_v7');
-  if (t) tickets = JSON.parse(t);
+  await renderTicketsWithImages();
   render();
+}
+
+// Render ticket list, fetching images from IndexedDB for display
+async function renderTicketsWithImages() {
+  const listEl = document.getElementById('ticketList');
+  if (!listEl) return;
+  const rows = await Promise.all(tickets.map(async t => {
+    const img = await getImage(t.id);
+    return `
+      <div class="ticket-card" onclick="viewTicket(${t.id})">
+        ${img
+          ? `<img src="${img}" class="ticket-thumb">`
+          : `<div class="ticket-thumb" style="display:flex;align-items:center;justify-content:center;font-size:1.5rem;">🎟️</div>`
+        }
+        <span style="flex:1">${t.name}</span>
+        <button onclick="event.stopPropagation(); deleteTicket(${t.id})" style="background:none;border:none;color:white;opacity:0.3;font-size:1rem">✕</button>
+      </div>`;
+  }));
+  listEl.innerHTML = rows.join('');
 }
 
 // --- WEATHER ---
@@ -162,14 +208,20 @@ async function fetchWeather() {
     const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=51.5074&longitude=-0.1278&current_weather=true');
     const data = await res.json();
     document.getElementById('londonTemp').textContent = Math.round(data.current_weather.temperature) + '°C';
-  } catch (e) { console.error("Weather error"); }
+  } catch (e) {}
 }
 
-// --- DROPBOX SYNC ---
-// Main data (lists + ticket metadata) goes to /trip_data.json.
-// Each ticket image is stored separately as /tickets/{id}.b64
-// so we never try to cram large base64 strings into a single upload.
-
+// =============================================================
+// DROPBOX SYNC
+// Strategy:
+//   trip_data.json  — lists + ticket metadata (names + ids)
+//   /tickets/{id}   — one file per ticket image (raw base64 dataUrl)
+//
+// On upload: only upload images that aren't already in Dropbox.
+// On download: MERGE cloud tickets with local tickets (additive,
+//   never delete what another device added). Each device only
+//   downloads images it doesn't already have locally.
+// =============================================================
 async function dbxUpload(token, path, body) {
   return fetch('https://content.dropboxapi.com/2/files/upload', {
     method: 'POST',
@@ -181,109 +233,109 @@ async function dbxUpload(token, path, body) {
     body
   });
 }
-
 async function dbxDownload(token, path) {
   return fetch('https://content.dropboxapi.com/2/files/download', {
     method: 'POST',
-    headers: {
-      'Authorization': 'Bearer ' + token,
-      'Dropbox-API-Arg': JSON.stringify({ path })
-    }
+    headers: { 'Authorization': 'Bearer ' + token, 'Dropbox-API-Arg': JSON.stringify({ path }) }
   });
 }
 
 async function syncToCloud() {
   const token = localStorage.getItem('dropbox_token');
   if (!token) return;
+  setStatus('☁️ Syncing…');
   try {
-    // 1. Upload main data with ticket metadata only (no images)
-    const payload = {
-      ...state,
-      tickets: tickets.map(t => ({ id: t.id, name: t.name }))
-    };
-    const res = await dbxUpload(token, '/trip_data.json', JSON.stringify(payload));
-    if (!res.ok) { document.getElementById('syncStatus').textContent = '☁️ Sync Error ❌'; return; }
+    // 1. Read current cloud manifest to do a proper merge before overwriting
+    let cloudTickets = [];
+    try {
+      const r = await dbxDownload(token, '/trip_data.json');
+      if (r.ok) { const d = await r.json(); cloudTickets = d.tickets || []; }
+    } catch(e) {}
 
-    // 2. Upload each ticket image that has one, as its own file
-    for (const t of tickets) {
-      if (t.img) {
-        await dbxUpload(token, `/tickets/${t.id}.b64`, t.img);
+    // Merge: union of cloud + local tickets (additive, keep all)
+    const merged = mergeTickets(cloudTickets, tickets);
+
+    // 2. Upload merged manifest
+    const payload = { ...state, tickets: merged.map(t => ({ id: t.id, name: t.name })) };
+    const res = await dbxUpload(token, '/trip_data.json', JSON.stringify(payload));
+    if (!res.ok) { setStatus('☁️ Sync Error ❌'); return; }
+
+    // 3. Upload only images we have locally that aren't yet in Dropbox
+    const localImageIds = await getAllImageIds();
+    const localIdSet = new Set(localImageIds.map(String));
+    for (const t of merged) {
+      if (localIdSet.has(String(t.id))) {
+        const img = await getImage(t.id);
+        if (img) await dbxUpload(token, `/tickets/${t.id}`, img);
       }
     }
 
-    // 3. Delete images from Dropbox for tickets that no longer exist
-    // (best-effort, ignore errors)
-    try {
-      const listRes = await fetch('https://api.dropboxapi.com/2/files/list_folder', {
-        method: 'POST',
-        headers: {
-          'Authorization': 'Bearer ' + token,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ path: '/tickets' })
-      });
-      if (listRes.ok) {
-        const listData = await listRes.json();
-        const currentIds = new Set(tickets.map(t => String(t.id)));
-        for (const entry of listData.entries || []) {
-          const fileId = entry.name.replace('.b64', '');
-          if (!currentIds.has(fileId)) {
-            fetch('https://api.dropboxapi.com/2/files/delete_v2', {
-              method: 'POST',
-              headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ path: entry.path_lower })
-            });
-          }
-        }
-      }
-    } catch(e) { /* cleanup is best-effort */ }
-
-    document.getElementById('syncStatus').textContent = '☁️ Synced ✅';
-  } catch (e) {
-    document.getElementById('syncStatus').textContent = '☁️ Offline ❌';
+    // 4. Update local tickets list to the merged set (adds anything from cloud we didn't have)
+    tickets = merged;
+    saveLocal();
+    await renderTicketsWithImages();
+    setStatus('☁️ Synced ✅');
+  } catch(e) {
+    setStatus('☁️ Offline ❌');
   }
 }
 
 async function syncFromCloud() {
   const token = localStorage.getItem('dropbox_token');
   if (!token) return;
-  document.getElementById('syncStatus').textContent = '☁️ Connecting…';
+  setStatus('☁️ Connecting…');
   try {
-    // 1. Download main data
+    // 1. Download manifest
     const res = await dbxDownload(token, '/trip_data.json');
-    if (!res.ok) { document.getElementById('syncStatus').textContent = '☁️ No cloud data'; return; }
-
+    if (!res.ok) { setStatus('☁️ No cloud data yet'); return; }
     const data = await res.json();
+
+    // 2. Merge lists (cloud wins for shopping/packing — last write wins is fine for lists)
     if (data.shopping)   state.shopping   = data.shopping;
     if (data.ukShopping) state.ukShopping = data.ukShopping;
     if (data.packing)    state.packing    = data.packing;
 
-    // 2. Restore ticket metadata
+    // 3. ADDITIVE merge of tickets — keep everything from both cloud and local
     const cloudTickets = data.tickets || [];
+    tickets = mergeTickets(cloudTickets, tickets);
 
-    // 3. Download each ticket image, merging with any locally-cached copy
-    const localById = Object.fromEntries(tickets.map(t => [t.id, t]));
-    tickets = [];
-    for (const ct of cloudTickets) {
-      let img = localById[ct.id]?.img || null; // use cached image if we have it
-      if (!img) {
-        // Try to download from Dropbox
+    // 4. Download images we don't have locally yet (new tickets from other devices)
+    const localImageIds = new Set((await getAllImageIds()).map(String));
+    let newImagesFound = false;
+    for (const t of tickets) {
+      if (!localImageIds.has(String(t.id))) {
         try {
-          const imgRes = await dbxDownload(token, `/tickets/${ct.id}.b64`);
-          if (imgRes.ok) img = await imgRes.text();
-        } catch(e) { /* image not found, leave null */ }
+          const imgRes = await dbxDownload(token, `/tickets/${t.id}`);
+          if (imgRes.ok) {
+            const imgData = await imgRes.text();
+            await saveImage(t.id, imgData);
+            newImagesFound = true;
+          }
+        } catch(e) { /* image not uploaded yet by other device, skip */ }
       }
-      tickets.push({ id: ct.id, name: ct.name, img });
     }
 
     saveLocal();
-    saveTickets();
     render();
-    document.getElementById('syncStatus').textContent = '☁️ Connected ✅';
-  } catch (e) {
-    console.error('Cloud download failed', e);
-    document.getElementById('syncStatus').textContent = '☁️ Sync Error ❌';
+    await renderTicketsWithImages();
+    setStatus('☁️ Connected ✅');
+  } catch(e) {
+    console.error(e);
+    setStatus('☁️ Sync Error ❌');
   }
+}
+
+// Merge two ticket arrays by id — union, no duplicates, preserves order (oldest first)
+function mergeTickets(a, b) {
+  const seen = new Map();
+  for (const t of [...a, ...b]) {
+    if (!seen.has(t.id)) seen.set(t.id, t);
+  }
+  return Array.from(seen.values()).sort((x, y) => x.id - y.id);
+}
+
+function setStatus(msg) {
+  document.getElementById('syncStatus').textContent = msg;
 }
 
 function saveToken() {
@@ -307,16 +359,13 @@ function toggleItem(key, id) {
 
   if (key === 'shopping') {
     if (!item.checked) {
-      // Item being checked — ask if they want to move it
       if (confirm("Move this to Packing List?")) {
         state.packing.push({ id: Date.now(), name: item.name, checked: false });
         state.shopping = state.shopping.filter(i => i.id !== id);
         saveAndSync();
         return;
       }
-      // User cancelled — still mark as checked
     }
-    // Unchecking: just toggle
     item.checked = !item.checked;
   } else {
     item.checked = !item.checked;
@@ -329,13 +378,12 @@ function deleteItem(key, id) {
   saveAndSync();
 }
 
-// Debounced sync — waits 2s after the last change before hitting Dropbox.
-// This makes adds/deletes feel instant while still keeping the cloud up to date.
+// Debounced sync for list changes
 let syncTimer = null;
 function saveAndSync() {
   saveLocal();
   render();
-  document.getElementById('syncStatus').textContent = '☁️ Pending…';
+  setStatus('☁️ Pending…');
   clearTimeout(syncTimer);
   syncTimer = setTimeout(syncToCloud, 2000);
 }
@@ -343,61 +391,70 @@ function saveAndSync() {
 // --- TICKET VAULT ---
 function processTicket(input) {
   const file = input.files[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = e => {
-      tempImg = e.target.result;
-      // FIX: Show a preview so user can confirm photo was captured
-      const preview = document.getElementById('photoPreview');
-      const previewImg = document.getElementById('previewImg');
-      previewImg.src = tempImg;
-      preview.style.display = 'block';
-      document.getElementById('syncStatus').textContent = '📸 Photo Ready';
-    };
-    reader.readAsDataURL(file);
-  }
+  if (!file) return;
+  // Compress image before storing: resize to max 1200px wide, quality 0.7
+  const img = new Image();
+  const url = URL.createObjectURL(file);
+  img.onload = () => {
+    const MAX = 1200;
+    let w = img.width, h = img.height;
+    if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+    tempImg = canvas.toDataURL('image/jpeg', 0.7);
+    URL.revokeObjectURL(url);
+    document.getElementById('previewImg').src = tempImg;
+    document.getElementById('photoPreview').style.display = 'block';
+    setStatus('📸 Photo Ready');
+  };
+  img.src = url;
 }
 
-function addTicket() {
+async function addTicket() {
   const nameInput = document.getElementById('ticketName');
   if (!nameInput.value.trim() || !tempImg) {
     alert("Please enter a name and take/select a photo first!");
     return;
   }
-  tickets.push({ id: Date.now(), name: nameInput.value.trim(), img: tempImg });
+  const id = Date.now();
+  tickets.push({ id, name: nameInput.value.trim() });
+  await saveImage(id, tempImg);  // stored in IndexedDB — no size limit
   nameInput.value = '';
   tempImg = null;
   document.getElementById('photoPreview').style.display = 'none';
-  document.getElementById('ticketFile').value = ''; // reset file input
-  saveTickets();
-  render();
-  syncToCloud();
+  document.getElementById('ticketFile').value = '';
+  saveLocal();
+  await renderTicketsWithImages();
+  setStatus('☁️ Pending…');
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(syncToCloud, 2000);
 }
 
-function deleteTicket(id) {
+async function deleteTicket(id) {
   tickets = tickets.filter(t => t.id !== id);
-  saveTickets();
-  render();
-  syncToCloud();
+  await deleteImage(id);
+  saveLocal();
+  await renderTicketsWithImages();
+  setStatus('☁️ Pending…');
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(syncToCloud, 2000);
 }
 
-// FIX: viewTicket uses a numeric id to look up the image from the tickets array,
-// instead of embedding the raw base64 string inside an onclick attribute (which breaks HTML).
-function viewTicket(id) {
-  const ticket = tickets.find(t => t.id === id);
-  if (!ticket || !ticket.img) return;
-  document.getElementById('fullImg').src = ticket.img;
+async function viewTicket(id) {
+  const img = await getImage(id);
+  if (!img) { alert("Image not yet downloaded from cloud. Try syncing again."); return; }
+  document.getElementById('fullImg').src = img;
   document.getElementById('imgModal').style.display = 'flex';
 }
 
-// --- UI RENDER ---
+// --- UI RENDER (lists only — tickets handled by renderTicketsWithImages) ---
 function render() {
   const configs = [
     { k: 'shopping', e: 'shopList' },
     { k: 'ukShopping', e: 'ukShopList' },
     { k: 'packing', e: 'packList' }
   ];
-
   configs.forEach(conf => {
     const listEl = document.getElementById(conf.e);
     if (!listEl) return;
@@ -408,17 +465,6 @@ function render() {
         <button onclick="deleteItem('${conf.k}', ${i.id})" style="background:none; border:none; color:white; opacity:0.3">✕</button>
       </div>`).join('');
   });
-
-  // FIX: Ticket cards use viewTicket(id) with numeric id — no base64 in onclick attributes.
-  document.getElementById('ticketList').innerHTML = tickets.map(t => `
-    <div class="ticket-card" onclick="viewTicket(${t.id})">
-      ${t.img
-        ? `<img src="${t.img}" class="ticket-thumb">`
-        : `<div class="ticket-thumb" style="display:flex;align-items:center;justify-content:center;font-size:1.5rem;">🎟️</div>`
-      }
-      <span>${t.name}</span>
-      <button onclick="event.stopPropagation(); deleteTicket(${t.id})" style="margin-left:auto; background:none; border:none; color:white; opacity:0.3">✕</button>
-    </div>`).join('');
 }
 
 function updateCD() {
@@ -450,17 +496,19 @@ function checkNotif() {
   }
 }
 
-// STARTUP
-loadLocal();
-fetchWeather();
-if (localStorage.getItem('dropbox_token')) {
-  document.getElementById('tokenInput').value = localStorage.getItem('dropbox_token');
-  syncFromCloud();
-}
-setInterval(updateCD, 1000);
-setInterval(checkNotif, 60000 * 15);
-updateCD();
-if (Notification.permission === 'granted') document.getElementById('notifStatus').textContent = 'Alerts: Active';
+// STARTUP — open IndexedDB first, then load everything
+openDB().then(async () => {
+  await loadLocal();
+  fetchWeather();
+  if (localStorage.getItem('dropbox_token')) {
+    document.getElementById('tokenInput').value = localStorage.getItem('dropbox_token');
+    syncFromCloud();
+  }
+  setInterval(updateCD, 1000);
+  setInterval(checkNotif, 60000 * 15);
+  updateCD();
+  if (Notification.permission === 'granted') document.getElementById('notifStatus').textContent = 'Alerts: Active';
+});
 </script>
 </body>
 </html>
