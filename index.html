@@ -4,73 +4,118 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>London Trip 2026</title>
-
-
-
 <link rel="apple-touch-icon" sizes="180x180" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAAE9klEQVR42u3dvVEcQRCG4bXlqEqFRRgEoGgUjsLBUAjYsmQoCGVwooQMCY69ndmema+/fqsaAwq47uapZW/nb7v79EAQV2N7/ri//zwuOnJSy0c5t6H5DMERiNceh3KvInEMvcSZ4UjRqxgc0/4LGuBI1KuzOJbcKCXFka5X/TiW30snwpG0V504RN5rpcCRt1fNOATfjsviyN6rNhyyj2sEcRj0qgGH+OM8KRwevTqKI8XjXhEcNr06hCPRcMByHE69uo0j3XDRQhxmvbqBI+lw4hIcfr3aw5F6uHkyDstevYvDYDpCR12X71v478zbK3D8NfE2wHEdh81cpiOlXZXxno9SvbqCw2yu21Ac3r0CBzgO47CcKLtT4I6Mqz5K9ao6jjNXjlo4jGfZh+Oo0CtwgOMADvslOoHPOYr0yhDH43bXHc8mun8WHOY4zoQtDqfCwBHlAxzgAAc4wAGOYBxmAY6oMMRBgOPh53afIsABDjcZ4AAHOMBR8IYUGeAABzjAAQ5wgKO6Dx6CgQMc4AAHPpABDnCAAxzgAMdAHAYzwZDBNME9HF+3jyIBDnCAI0+AYxQOAx/gYDnkURwz70DBAY7COLL7AEesDGcc3378ehvvff3t37vpx0vgSO0DHLEywAGOFhx5fYAjVgY4wNGII6kPcMTKsDo1ARyxMsABji4c6XycGQ25+VzLe2zF/4w3rhyxMqxOhwRHrAyrc2XBESvD6kRqcMTKsDrLXgdHubPsxX085yaFQ7xXQ3Bo1vySmBoO5V6NwiFV9r8pCeKQ7dVYHAo1v8pHZyaYfq+G41hY9tVMlHGo9WoSjsll7+Sgj0OnV1NxTCj75qtnwaHQqwU4RlR+/EVlb0gFe7USx8ni+14oKY4lvWrA4RE8PmfzFnCAAxzgAAc4wAEOcICDCcYVdvbhysGVAxzgAAc4wAEOcIADHOAABzjAAQ5w6ONgq0lwgAMc4ADHqrEVNsYHBzjA8ScuT9u0cMZhOft8IQ6r2eeW61ay4KiybkVqxZs4jkIr3gTXysriKLRWVnaVvSCOQqvsxffnWBjV9+fQ39lHB0ehnX2y7AmmsAVDrT3BEu0muBxHrd0Ekw68jfv3sYNDvFfBOPKOys7HkeLReBiO1EP2L58+bnc3o/U7sw/ZB+DIPp8DHN0+bM9bAcd5H7YnNYHjvA/bM97Acd4HOMDRiMNpgjE4un3YnkgNjvM+wAGOwzj81q2Ao9sHOMBxDIflijdwdPsABzgO4HBdKwuObh/gAAc4wNGNw3gLBnB0+wDHf3/yy9MGjnI4bsb+OiW/aYLgAMdpHN7bPnXIOOiDbZ+q3HO8ksE9BzjAAQ7erYCD5xzgAAc4wAEOcIADHOAABzjAAQ5wgAMc4AAHOMABDnCAAxzgWImDOaTgYIIxOMABDnCAYxIOVryBg+WQ4AAHe5/H4vDenwMcrTLAAY7DOCz3BJt/GI+HDHCAowVH3jM0ZCOpDHCAoxFH0qOZwBErI/epCeAYKiMfji/bh9RhgkPTBzimych3xhs4psnIdzokOKbJyHeuLDimych3IjU4psmwOst+ThWletWAQ7nmaSWU6lUbDs2aZ+ZfqlfNOKTKnp95qV514lCoeUnapXrVj2Nh2QsTLtWrszgml7081VK9isExoWyRJEv1KhLHiMrVcivVqyE4Thavlo9ybkPz+Q2GwkWLFs7tDQAAAABJRU5ErkJggg==">
 <link rel="icon" type="image/png" sizes="180x180" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAAE9klEQVR42u3dvVEcQRCG4bXlqEqFRRgEoGgUjsLBUAjYsmQoCGVwooQMCY69ndmema+/fqsaAwq47uapZW/nb7v79EAQV2N7/ri//zwuOnJSy0c5t6H5DMERiNceh3KvInEMvcSZ4UjRqxgc0/4LGuBI1KuzOJbcKCXFka5X/TiW30snwpG0V504RN5rpcCRt1fNOATfjsviyN6rNhyyj2sEcRj0qgGH+OM8KRwevTqKI8XjXhEcNr06hCPRcMByHE69uo0j3XDRQhxmvbqBI+lw4hIcfr3aw5F6uHkyDstevYvDYDpCR12X71v478zbK3D8NfE2wHEdh81cpiOlXZXxno9SvbqCw2yu21Ac3r0CBzgO47CcKLtT4I6Mqz5K9ao6jjNXjlo4jGfZh+Oo0CtwgOMADvslOoHPOYr0yhDH43bXHc8mun8WHOY4zoQtDqfCwBHlAxzgAAc4wAGOYBxmAY6oMMRBgOPh53afIsABDjcZ4AAHOMBR8IYUGeAABzjAAQ5wgKO6Dx6CgQMc4AAHPpABDnCAAxzgAMdAHAYzwZDBNME9HF+3jyIBDnCAI0+AYxQOAx/gYDnkURwz70DBAY7COLL7AEesDGcc3378ehvvff3t37vpx0vgSO0DHLEywAGOFhx5fYAjVgY4wNGII6kPcMTKsDo1ARyxMsABji4c6XycGQ25+VzLe2zF/4w3rhyxMqxOhwRHrAyrc2XBESvD6kRqcMTKsDrLXgdHubPsxX085yaFQ7xXQ3Bo1vySmBoO5V6NwiFV9r8pCeKQ7dVYHAo1v8pHZyaYfq+G41hY9tVMlHGo9WoSjsll7+Sgj0OnV1NxTCj75qtnwaHQqwU4RlR+/EVlb0gFe7USx8ni+14oKY4lvWrA4RE8PmfzFnCAAxzgAAc4wAEOcICDCcYVdvbhysGVAxzgAAc4wAEOcIADHOAABzjAAQ5w6ONgq0lwgAMc4ADHqrEVNsYHBzjA8ScuT9u0cMZhOft8IQ6r2eeW61ay4KiybkVqxZs4jkIr3gTXysriKLRWVnaVvSCOQqvsxffnWBjV9+fQ39lHB0ehnX2y7AmmsAVDrT3BEu0muBxHrd0Ekw68jfv3sYNDvFfBOPKOys7HkeLReBiO1EP2L58+bnc3o/U7sw/ZB+DIPp8DHN0+bM9bAcd5H7YnNYHjvA/bM97Acd4HOMDRiMNpgjE4un3YnkgNjvM+wAGOwzj81q2Ao9sHOMBxDIflijdwdPsABzgO4HBdKwuObh/gAAc4wNGNw3gLBnB0+wDHf3/yy9MGjnI4bsb+OiW/aYLgAMdpHN7bPnXIOOiDbZ+q3HO8ksE9BzjAAQ7erYCD5xzgAAc4wAEOcIADHOAABzjAAQ5wgAMc4AAHOMABDnCAAxzgWImDOaTgYIIxOMABDnCAYxIOVryBg+WQ4AAHe5/H4vDenwMcrTLAAY7DOCz3BJt/GI+HDHCAowVH3jM0ZCOpDHCAoxFH0qOZwBErI/epCeAYKiMfji/bh9RhgkPTBzimych3xhs4psnIdzokOKbJyHeuLDimych3IjU4psmwOst+ThWletWAQ7nmaSWU6lUbDs2aZ+ZfqlfNOKTKnp95qV514lCoeUnapXrVj2Nh2QsTLtWrszgml7081VK9isExoWyRJEv1KhLHiMrVcivVqyE4Thavlo9ybkPz+Q2GwkWLFs7tDQAAAABJRU5ErkJggg==">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-
 <style>
   :root { --red: #DC143C; --glass: rgba(255,255,255,0.12); --glass-border: rgba(255,255,255,0.25); --text: #ffffff; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'DM Sans', sans-serif; min-height: 100vh; color: var(--text); background: #0a0a1a; overflow-x: hidden; }
-  .bg { position: fixed; inset: 0; z-index: 0; background-image: url('https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=1920'); background-size: cover; background-position: center; filter: brightness(0.4); }
+  .bg { position: fixed; inset: 0; z-index: 0; background-image: url('https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=1920'); background-size: cover; background-position: center; filter: brightness(0.4); transition: filter 1s; }
+  .bg.arrived { background-image: url('https://images.unsplash.com/photo-1486299267070-83823f5448dd?w=1920'); filter: brightness(0.55); }
   .container { position: relative; z-index: 10; max-width: 800px; margin: 0 auto; padding: 20px 20px 80px; }
   .glass { background: var(--glass); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid var(--glass-border); border-radius: 20px; padding: 25px; margin-bottom: 20px; }
   .header { text-align: center; margin: 40px 0 20px; }
   .header h1 { font-family: 'Playfair Display', serif; font-size: 3.5rem; }
   .header h1 span { color: var(--red); }
+  .arrived-banner { display:none; text-align:center; font-family:'Playfair Display',serif; font-size:1.4rem; padding: 18px; background: linear-gradient(135deg,#DC143C,#8B0010); border-radius:20px; margin-bottom:20px; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.8} }
   .btn { padding: 10px 18px; border: none; border-radius: 10px; cursor: pointer; font-weight: 500; font-family: 'DM Sans', sans-serif; transition: 0.2s; }
   .btn-red { background: var(--red); color: #fff; }
   .btn-glass { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid var(--glass-border); }
-  .input-row { display: flex; gap: 10px; margin-bottom: 15px; }
-  input[type="text"] { flex: 1; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); border-radius: 10px; color: #fff; outline: none; }
+  .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+  .input-row { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+  input[type="text"], input[type="time"], textarea, select { flex: 1; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); border-radius: 10px; color: #fff; outline: none; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; }
+  textarea { resize: vertical; min-height: 120px; width: 100%; }
+  select option { background: #1a1a3e; color: #fff; }
   .item-row { display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 10px; margin-bottom: 8px; }
   .item-row.checked { opacity: 0.5; text-decoration: line-through; }
   .item-name { flex: 1; font-size: 0.95rem; }
   .countdown-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; text-align: center; }
   .num { font-size: 2.8rem; font-weight: 700; font-family: 'Playfair Display'; display: block; }
   .ticket-card { background: rgba(255,255,255,0.07); border-radius: 12px; padding: 12px; margin-bottom: 10px; display: flex; align-items: center; gap: 15px; cursor: pointer; }
-  .ticket-thumb { width: 50px; height: 50px; border-radius: 6px; object-fit: cover; background: #333; }
-  .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center; }
+  .ticket-thumb { width: 50px; height: 50px; border-radius: 6px; object-fit: cover; background: #333; flex-shrink: 0; }
+  .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 1000; align-items: center; justify-content: center; flex-direction: column; gap: 16px; }
+  .modal img { max-width: 95vw; max-height: 85vh; border-radius: 12px; }
+  .modal-close { color: white; font-size: 1rem; opacity: 0.6; cursor: pointer; }
   .airplane { position: fixed; top: 28px; left: -80px; font-size: 2rem; z-index: 100; animation: fly 15s linear infinite; }
-  @keyframes fly { 0% { left: -80px; } 100% { left: 110vw; } }
+  @keyframes fly { 0%{left:-80px} 100%{left:110vw} }
+
+  /* ---- ITINERARY ---- */
+  .day-block { margin-bottom: 18px; }
+  .day-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.5); margin-bottom: 8px; }
+  .event-row { display: flex; gap: 10px; align-items: flex-start; padding: 12px; background: rgba(255,255,255,0.06); border-radius: 12px; margin-bottom: 8px; border-left: 3px solid var(--red); }
+  .event-time { font-size: 0.8rem; color: rgba(255,255,255,0.6); min-width: 46px; padding-top: 2px; }
+  .event-body { flex: 1; }
+  .event-title { font-weight: 500; font-size: 0.95rem; }
+  .event-note { font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-top: 3px; }
+  .event-actions { display: flex; gap: 6px; align-items: center; }
+  .day-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .day-tab { padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 500; cursor: pointer; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.07); color: white; transition: 0.2s; }
+  .day-tab.active { background: var(--red); border-color: var(--red); }
+
+  /* ---- MEMORIES GRID ---- */
+  .memories-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .memory-cell { aspect-ratio: 1; border-radius: 10px; overflow: hidden; cursor: pointer; position: relative; background: rgba(255,255,255,0.05); }
+  .memory-cell img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.2s; }
+  .memory-cell:hover img { transform: scale(1.05); }
+  .memory-cell .mem-del { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.6); border: none; color: white; border-radius: 50%; width: 22px; height: 22px; font-size: 0.7rem; cursor: pointer; display: none; align-items: center; justify-content: center; }
+  .memory-cell:hover .mem-del { display: flex; }
+  .memory-cell .mem-caption { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.7)); padding: 8px 6px 5px; font-size: 0.7rem; opacity: 0; transition: 0.2s; }
+  .memory-cell:hover .mem-caption { opacity: 1; }
+
+  /* ---- CONFETTI ---- */
+  .confetti-piece { position: fixed; width: 10px; height: 10px; top: -10px; z-index: 9999; pointer-events: none; animation: confettiFall linear forwards; border-radius: 2px; }
+  @keyframes confettiFall { to { top: 110vh; transform: rotate(720deg) translateX(var(--drift)); } }
+
+  /* ---- NOTES ---- */
+  .notes-saved { font-size: 0.75rem; color: rgba(255,255,255,0.4); margin-top: 6px; text-align: right; }
+
+  /* ---- SECTION HEADERS ---- */
+  .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+  .section-header h3 { margin: 0; }
 </style>
 </head>
 <body>
-
-<div class="bg"></div>
+<div class="bg" id="bgEl"></div>
 <div class="airplane">✈️</div>
+<canvas id="confettiCanvas" style="position:fixed;inset:0;z-index:9998;pointer-events:none;display:none;"></canvas>
 
 <div class="container">
+  <!-- HEADER -->
   <div class="header">
     <h1>London<span>.</span></h1>
-    <p>May 11, 2026</p>
+    <p id="headerSub">May 11, 2026</p>
   </div>
 
-  <div class="glass" style="display: flex; justify-content: space-between; align-items: center; padding: 15px;">
+  <!-- ARRIVED BANNER (shown when date is reached) -->
+  <div class="arrived-banner" id="arrivedBanner">🎉 You're in London! Enjoy every moment! 🇬🇧</div>
+
+  <!-- STATUS BAR -->
+  <div class="glass" style="display:flex;justify-content:space-between;align-items:center;padding:15px;">
     <div>
-      <div id="londonTemp" style="font-size: 1.5rem; font-weight: 700;">--°C</div>
-      <div id="londonSky" style="font-size: 0.8rem; color: rgba(255,255,255,0.6);">London Weather</div>
+      <div id="londonTemp" style="font-size:1.5rem;font-weight:700;">--°C</div>
+      <div id="londonSky" style="font-size:0.8rem;color:rgba(255,255,255,0.6);">London Weather</div>
     </div>
-    <div style="text-align: right;">
-      <div id="syncStatus" style="font-size: 0.75rem; color: #00ff00;">Cloud Ready</div>
-      <div id="notifStatus" style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Alerts: Off</div>
+    <div style="text-align:right;">
+      <div id="syncStatus" style="font-size:0.75rem;color:#00ff00;">Cloud Ready</div>
+      <div id="notifStatus" style="font-size:0.75rem;color:rgba(255,255,255,0.5);">Alerts: Off</div>
     </div>
   </div>
 
+  <!-- SYNC -->
   <div class="glass">
     <div class="input-row">
       <input type="text" id="tokenInput" placeholder="Dropbox Token">
       <button class="btn btn-red" onclick="saveToken()">Sync</button>
     </div>
-    <button class="btn btn-glass" style="width:100%;" id="notifBtn" onclick="requestNotifPermission()">🔔 Enable Morning Countdown</button>
+    <button class="btn btn-glass" style="width:100%;" onclick="requestNotifPermission()">🔔 Enable Morning Countdown</button>
   </div>
 
-  <div class="glass">
+  <!-- COUNTDOWN -->
+  <div class="glass" id="countdownCard">
     <div class="countdown-grid">
       <div><span class="num" id="cdDays">--</span><div style="font-size:0.7rem;">DAYS</div></div>
       <div><span class="num" id="cdHours">--</span><div style="font-size:0.7rem;">HOURS</div></div>
@@ -78,208 +123,273 @@
     </div>
   </div>
 
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- FEATURE 2: ITINERARY                        -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="glass">
+    <div class="section-header">
+      <h3>🗓️ Itinerary</h3>
+      <button class="btn btn-sm btn-red" onclick="showAddEvent()">+ Add</button>
+    </div>
+    <div class="day-tabs" id="dayTabs"></div>
+    <div id="itineraryList"></div>
+    <!-- Add event form (hidden by default) -->
+    <div id="eventForm" style="display:none; margin-top:12px; padding-top:12px; border-top:1px solid var(--glass-border);">
+      <div class="input-row">
+        <select id="evDay" style="flex:0 0 auto; width:auto;"></select>
+        <input type="time" id="evTime" style="flex:0 0 120px;">
+        <input type="text" id="evTitle" placeholder="Title (e.g. Tower of London)">
+      </div>
+      <div class="input-row">
+        <input type="text" id="evNote" placeholder="Note (optional, e.g. Book tickets in advance)">
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-red" onclick="saveEvent()">Save</button>
+        <button class="btn btn-glass" onclick="cancelEvent()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- LISTS                                       -->
+  <!-- ═══════════════════════════════════════════ -->
   <div class="glass">
     <h3 style="margin-bottom:15px">🛍️ Buy for Trip</h3>
-    <div class="input-row"><input type="text" id="shopInput"><button class="btn btn-red" onclick="addItem('shopping', 'shopInput')">Add</button></div>
+    <div class="input-row"><input type="text" id="shopInput"><button class="btn btn-red" onclick="addItem('shopping','shopInput')">Add</button></div>
     <div id="shopList"></div>
   </div>
-
   <div class="glass">
     <h3 style="margin-bottom:15px">🇬🇧 Shopping in UK</h3>
-    <div class="input-row"><input type="text" id="ukShopInput"><button class="btn btn-red" onclick="addItem('ukShopping', 'ukShopInput')">Add</button></div>
+    <div class="input-row"><input type="text" id="ukShopInput"><button class="btn btn-red" onclick="addItem('ukShopping','ukShopInput')">Add</button></div>
     <div id="ukShopList"></div>
   </div>
-
   <div class="glass">
     <h3 style="margin-bottom:15px">📦 Packing List</h3>
-    <div class="input-row"><input type="text" id="packInput"><button class="btn btn-red" onclick="addItem('packing', 'packInput')">Add</button></div>
+    <div class="input-row"><input type="text" id="packInput"><button class="btn btn-red" onclick="addItem('packing','packInput')">Add</button></div>
     <div id="packList"></div>
   </div>
 
+  <!-- TICKET VAULT -->
   <div class="glass">
     <h3 style="margin-bottom:15px">🎟️ Ticket Vault</h3>
     <div class="input-row">
       <input type="text" id="ticketName" placeholder="Ticket Name">
-      <input type="file" id="ticketFile" accept="image/*" capture="camera" style="display:none" onchange="processTicket(this)">
-      <button class="btn btn-glass" onclick="document.getElementById('ticketFile').click()">📷 Camera/Photo</button>
+      <input type="file" id="ticketFile" accept="image/*" capture="camera" style="display:none" onchange="processTicket(this, 'ticket')">
+      <button class="btn btn-glass" onclick="document.getElementById('ticketFile').click()">📷 Photo</button>
       <button class="btn btn-red" onclick="addTicket()">Save</button>
     </div>
-    <div id="photoPreview" style="margin-bottom:10px; display:none;">
-      <img id="previewImg" style="height:60px; border-radius:8px; border: 1px solid var(--glass-border);">
-      <span style="font-size:0.8rem; margin-left:10px; opacity:0.7;">Photo ready ✅</span>
+    <div id="photoPreview" style="margin-bottom:10px;display:none;">
+      <img id="previewImg" style="height:60px;border-radius:8px;border:1px solid var(--glass-border);">
+      <span style="font-size:0.8rem;margin-left:10px;opacity:0.7;">Photo ready ✅</span>
     </div>
     <div id="ticketList"></div>
   </div>
 
-<div class="modal" id="imgModal" onclick="this.style.display='none'"><img id="fullImg" style="max-width:95%; max-height:95%;"></div>
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- FEATURE 4: SHARED NOTES                     -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="glass">
+    <div class="section-header">
+      <h3>📝 Shared Notes</h3>
+      <span id="notesSavedLabel" class="notes-saved"></span>
+    </div>
+    <textarea id="notesArea" placeholder="Hotel confirmation, addresses, things to remember…"></textarea>
+    <div style="margin-top:10px; display:flex; gap:8px;">
+      <button class="btn btn-red" onclick="saveNotes()">Save Notes</button>
+      <span style="font-size:0.8rem;opacity:0.5;align-self:center;">Syncs to all devices</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- FEATURE 5: PHOTO MEMORIES                   -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="glass">
+    <div class="section-header">
+      <h3>📸 Memories</h3>
+      <div style="display:flex;gap:8px;">
+        <input type="file" id="memFile" accept="image/*" capture="camera" style="display:none" onchange="processTicket(this, 'memory')">
+        <button class="btn btn-sm btn-red" onclick="document.getElementById('memFile').click()">+ Photo</button>
+      </div>
+    </div>
+    <div id="memoriesGrid" class="memories-grid"></div>
+    <div id="memPreviewRow" style="display:none;margin-top:10px;">
+      <img id="memPreviewImg" style="height:70px;border-radius:8px;border:1px solid var(--glass-border);">
+      <div class="input-row" style="margin-top:8px;">
+        <input type="text" id="memCaption" placeholder="Caption (optional)">
+        <button class="btn btn-red" onclick="addMemory()">Add</button>
+        <button class="btn btn-glass" onclick="cancelMemory()">✕</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<!-- FULLSCREEN IMAGE MODAL -->
+<div class="modal" id="imgModal">
+  <img id="fullImg">
+  <span class="modal-close" onclick="document.getElementById('imgModal').style.display='none'">✕ Close</span>
+</div>
 
 <script>
+// ================================================================
+// CONSTANTS
+// ================================================================
 const TRAVEL_DATE = new Date('2026-05-11T15:00:00').getTime();
+const TRIP_DAYS = ['May 11','May 12','May 13','May 14','May 15','May 16','May 17','May 18'];
 
-let state = { shopping: [], ukShopping: [], packing: [] };
-let tickets = [];     // { id, name } — images live in IndexedDB, not here
-let deletedIds = [];  // tombstone list — ids permanently deleted, never re-added by merge
-let tempImg = null;
+// ================================================================
+// STATE
+// ================================================================
+let state = {
+  shopping: [], ukShopping: [], packing: [],
+  itinerary: [],   // [{id, day, time, title, note}]
+  notes: '',
+  memories: []     // [{id, caption}] — images in IndexedDB
+};
+let tickets    = [];
+let deletedIds = [];
+let tempImg    = null;
+let tempImgFor = null; // 'ticket' or 'memory'
+let activeDay  = 0;
+let confettiFired = false;
 
-// =============================================================
-// INDEXEDDB — unlimited local image storage, no quota issues
-// =============================================================
+// ================================================================
+// INDEXEDDB — images for both tickets AND memories
+// ================================================================
 let db;
 function openDB() {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open('LondonTrip', 1);
-    req.onupgradeneeded = e => e.target.result.createObjectStore('images', { keyPath: 'id' });
+    const req = indexedDB.open('LondonTrip', 2);
+    req.onupgradeneeded = e => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains('images')) d.createObjectStore('images', { keyPath: 'id' });
+    };
     req.onsuccess = e => { db = e.target.result; resolve(); };
     req.onerror = reject;
   });
 }
-function saveImage(id, dataUrl) {
-  return new Promise((resolve, reject) => {
+const idb = {
+  save: (id, dataUrl) => new Promise((res, rej) => {
     const tx = db.transaction('images', 'readwrite');
     tx.objectStore('images').put({ id, dataUrl });
-    tx.oncomplete = resolve;
-    tx.onerror = reject;
-  });
-}
-function getImage(id) {
-  return new Promise((resolve) => {
+    tx.oncomplete = res; tx.onerror = rej;
+  }),
+  get: (id) => new Promise(res => {
     const tx = db.transaction('images', 'readonly');
     const req = tx.objectStore('images').get(id);
-    req.onsuccess = () => resolve(req.result?.dataUrl || null);
-    req.onerror = () => resolve(null);
-  });
-}
-function deleteImage(id) {
-  return new Promise((resolve) => {
+    req.onsuccess = () => res(req.result?.dataUrl || null);
+    req.onerror = () => res(null);
+  }),
+  del: (id) => new Promise(res => {
     const tx = db.transaction('images', 'readwrite');
     tx.objectStore('images').delete(id);
-    tx.oncomplete = resolve;
-    tx.onerror = resolve;
-  });
-}
-function getAllImageIds() {
-  return new Promise((resolve) => {
+    tx.oncomplete = res; tx.onerror = res;
+  }),
+  allKeys: () => new Promise(res => {
     const tx = db.transaction('images', 'readonly');
     const req = tx.objectStore('images').getAllKeys();
-    req.onsuccess = () => resolve(req.result || []);
-    req.onerror = () => resolve([]);
-  });
-}
+    req.onsuccess = () => res(req.result || []);
+    req.onerror = () => res([]);
+  })
+};
 
-// =============================================================
-// LOCAL STATE — localStorage for lists, IndexedDB for images
-// =============================================================
+// ================================================================
+// LOCAL STORAGE
+// ================================================================
 function saveLocal() {
-  try { localStorage.setItem('ldn_v8', JSON.stringify({ state, tickets, deletedIds })); } catch(e) {}
+  try { localStorage.setItem('ldn_v9', JSON.stringify({ state, tickets, deletedIds })); } catch(e) {}
 }
-
 async function loadLocal() {
-  const raw = localStorage.getItem('ldn_v8');
+  const raw = localStorage.getItem('ldn_v9');
   if (raw) {
     const d = JSON.parse(raw);
-    state = d.state || state;
-    tickets = d.tickets || [];
+    state      = { ...state, ...d.state };
+    tickets    = d.tickets    || [];
     deletedIds = d.deletedIds || [];
   }
-  await renderTicketsWithImages();
   render();
+  await renderTickets();
+  await renderMemories();
 }
 
-// Render ticket list, fetching images from IndexedDB for display
-async function renderTicketsWithImages() {
-  const listEl = document.getElementById('ticketList');
-  if (!listEl) return;
-  const rows = await Promise.all(tickets.map(async t => {
-    const img = await getImage(t.id);
-    return `
-      <div class="ticket-card" onclick="viewTicket(${t.id})">
-        ${img
-          ? `<img src="${img}" class="ticket-thumb">`
-          : `<div class="ticket-thumb" style="display:flex;align-items:center;justify-content:center;font-size:1.5rem;">🎟️</div>`
-        }
-        <span style="flex:1">${t.name}</span>
-        <button onclick="event.stopPropagation(); deleteTicket(${t.id})" style="background:none;border:none;color:white;opacity:0.3;font-size:1rem">✕</button>
-      </div>`;
-  }));
-  listEl.innerHTML = rows.join('');
-}
-
-// --- WEATHER ---
-async function fetchWeather() {
-  try {
-    const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=51.5074&longitude=-0.1278&current_weather=true');
-    const data = await res.json();
-    document.getElementById('londonTemp').textContent = Math.round(data.current_weather.temperature) + '°C';
-  } catch (e) {}
-}
-
-// =============================================================
-// DROPBOX SYNC
-// Strategy:
-//   trip_data.json  — lists + ticket metadata (names + ids)
-//   /tickets/{id}   — one file per ticket image (raw base64 dataUrl)
-//
-// On upload: only upload images that aren't already in Dropbox.
-// On download: MERGE cloud tickets with local tickets (additive,
-//   never delete what another device added). Each device only
-//   downloads images it doesn't already have locally.
-// =============================================================
-async function dbxUpload(token, path, body) {
-  return fetch('https://content.dropboxapi.com/2/files/upload', {
+// ================================================================
+// DROPBOX
+// ================================================================
+const dbx = {
+  upload: (token, path, body) => fetch('https://content.dropboxapi.com/2/files/upload', {
     method: 'POST',
     headers: {
       'Authorization': 'Bearer ' + token,
       'Dropbox-API-Arg': JSON.stringify({ path, mode: 'overwrite' }),
       'Content-Type': 'application/octet-stream'
-    },
-    body
-  });
-}
-async function dbxDownload(token, path) {
-  return fetch('https://content.dropboxapi.com/2/files/download', {
+    }, body
+  }),
+  download: (token, path) => fetch('https://content.dropboxapi.com/2/files/download', {
     method: 'POST',
     headers: { 'Authorization': 'Bearer ' + token, 'Dropbox-API-Arg': JSON.stringify({ path }) }
-  });
-}
+  }),
+  delete: (token, path) => fetch('https://api.dropboxapi.com/2/files/delete_v2', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path })
+  })
+};
 
 async function syncToCloud() {
   const token = localStorage.getItem('dropbox_token');
   if (!token) return;
   setStatus('☁️ Syncing…');
   try {
-    // 1. Read current cloud manifest to do a proper merge before overwriting
-    let cloudTickets = [];
+    // Read cloud first to merge properly
+    let cloudTickets = [], cloudMemories = [], cloudDeleted = [];
     try {
-      const r = await dbxDownload(token, '/trip_data.json');
-      if (r.ok) { const d = await r.json(); cloudTickets = d.tickets || []; }
+      const r = await dbx.download(token, '/trip_data.json');
+      if (r.ok) {
+        const d = await r.json();
+        cloudTickets  = d.tickets   || [];
+        cloudMemories = d.memories  || [];
+        cloudDeleted  = d.deletedIds|| [];
+      }
     } catch(e) {}
 
-    // Merge: union of cloud + local tickets, tombstones excluded
-    const merged = mergeTickets(cloudTickets, tickets);
+    // Merge tombstones
+    deletedIds = [...new Set([...deletedIds, ...cloudDeleted].map(String))];
+    const dead = new Set(deletedIds);
 
-    // 2. Upload merged manifest (include deletedIds so other devices respect deletions)
-    const payload = { ...state, tickets: merged.map(t => ({ id: t.id, name: t.name })), deletedIds };
-    const res = await dbxUpload(token, '/trip_data.json', JSON.stringify(payload));
+    const mergedTickets  = mergeById(cloudTickets,  tickets);
+    const mergedMemories = mergeById(cloudMemories, state.memories).filter(m => !dead.has(String(m.id)));
+
+    const payload = {
+      ...state,
+      tickets:   mergedTickets.map(t => ({ id: t.id, name: t.name })),
+      memories:  mergedMemories.map(m => ({ id: m.id, caption: m.caption })),
+      deletedIds
+    };
+    const res = await dbx.upload(token, '/trip_data.json', JSON.stringify(payload));
     if (!res.ok) { setStatus('☁️ Sync Error ❌'); return; }
 
-    // 3. Upload only images we have locally that aren't yet in Dropbox
-    const localImageIds = await getAllImageIds();
-    const localIdSet = new Set(localImageIds.map(String));
-    for (const t of merged) {
-      if (localIdSet.has(String(t.id))) {
-        const img = await getImage(t.id);
-        if (img) await dbxUpload(token, `/tickets/${t.id}`, img);
+    // Upload new images (tickets + memories)
+    const localKeys = new Set((await idb.allKeys()).map(String));
+    for (const t of mergedTickets) {
+      if (localKeys.has(String(t.id))) {
+        const img = await idb.get(t.id);
+        if (img) await dbx.upload(token, `/images/${t.id}`, img);
+      }
+    }
+    for (const m of mergedMemories) {
+      if (localKeys.has(String(m.id))) {
+        const img = await idb.get(m.id);
+        if (img) await dbx.upload(token, `/images/${m.id}`, img);
       }
     }
 
-    // 4. Update local tickets list to the merged set (adds anything from cloud we didn't have)
-    tickets = merged;
+    tickets = mergedTickets;
+    state.memories = mergedMemories;
     saveLocal();
-    await renderTicketsWithImages();
+    await renderTickets();
+    await renderMemories();
     setStatus('☁️ Synced ✅');
-  } catch(e) {
-    setStatus('☁️ Offline ❌');
-  }
+  } catch(e) { setStatus('☁️ Offline ❌'); }
 }
 
 async function syncFromCloud() {
@@ -287,53 +397,49 @@ async function syncFromCloud() {
   if (!token) return;
   setStatus('☁️ Connecting…');
   try {
-    // 1. Download manifest
-    const res = await dbxDownload(token, '/trip_data.json');
+    const res = await dbx.download(token, '/trip_data.json');
     if (!res.ok) { setStatus('☁️ No cloud data yet'); return; }
     const data = await res.json();
 
-    // 2. Merge lists
-    if (data.shopping)   state.shopping   = data.shopping;
-    if (data.ukShopping) state.ukShopping = data.ukShopping;
-    if (data.packing)    state.packing    = data.packing;
+    // Merge state
+    ['shopping','ukShopping','packing','itinerary'].forEach(k => {
+      if (data[k]) state[k] = data[k];
+    });
+    if (data.notes !== undefined) state.notes = data.notes;
 
-    // Merge tombstones — union of cloud + local deleted ids
+    // Merge tombstones
     const cloudDeleted = data.deletedIds || [];
     deletedIds = [...new Set([...deletedIds, ...cloudDeleted].map(String))];
+    const dead = new Set(deletedIds);
 
-    // 3. ADDITIVE merge of tickets — tombstones are filtered inside mergeTickets
-    const cloudTickets = data.tickets || [];
-    tickets = mergeTickets(cloudTickets, tickets);
+    // Merge tickets & memories
+    tickets        = mergeById(data.tickets  || [], tickets);
+    state.memories = mergeById(data.memories || [], state.memories).filter(m => !dead.has(String(m.id)));
 
-    // 4. Download images we don't have locally yet (new tickets from other devices)
-    const localImageIds = new Set((await getAllImageIds()).map(String));
-    let newImagesFound = false;
-    for (const t of tickets) {
-      if (!localImageIds.has(String(t.id))) {
+    // Download missing images
+    const localKeys = new Set((await idb.allKeys()).map(String));
+    const allImages = [
+      ...tickets.map(t => t.id),
+      ...state.memories.map(m => m.id)
+    ];
+    for (const id of allImages) {
+      if (!localKeys.has(String(id))) {
         try {
-          const imgRes = await dbxDownload(token, `/tickets/${t.id}`);
-          if (imgRes.ok) {
-            const imgData = await imgRes.text();
-            await saveImage(t.id, imgData);
-            newImagesFound = true;
-          }
-        } catch(e) { /* image not uploaded yet by other device, skip */ }
+          const r = await dbx.download(token, `/images/${id}`);
+          if (r.ok) await idb.save(id, await r.text());
+        } catch(e) {}
       }
     }
 
     saveLocal();
     render();
-    await renderTicketsWithImages();
+    await renderTickets();
+    await renderMemories();
     setStatus('☁️ Connected ✅');
-  } catch(e) {
-    console.error(e);
-    setStatus('☁️ Sync Error ❌');
-  }
+  } catch(e) { console.error(e); setStatus('☁️ Sync Error ❌'); }
 }
 
-// Merge two ticket arrays by id — union, no duplicates, preserves order (oldest first).
-// Any id in deletedIds is excluded — tombstones always win.
-function mergeTickets(a, b) {
+function mergeById(a, b) {
   const dead = new Set(deletedIds.map(String));
   const seen = new Map();
   for (const t of [...a, ...b]) {
@@ -342,16 +448,116 @@ function mergeTickets(a, b) {
   return Array.from(seen.values()).sort((x, y) => x.id - y.id);
 }
 
-function setStatus(msg) {
-  document.getElementById('syncStatus').textContent = msg;
+// ================================================================
+// DEBOUNCED SYNC
+// ================================================================
+let syncTimer = null;
+function saveAndSync() {
+  saveLocal(); render();
+  setStatus('☁️ Pending…');
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(syncToCloud, 2000);
 }
-
+function setStatus(msg) { document.getElementById('syncStatus').textContent = msg; }
 function saveToken() {
   const t = document.getElementById('tokenInput').value.trim();
   if (t) { localStorage.setItem('dropbox_token', t); syncFromCloud(); }
 }
 
-// --- CORE APP LOGIC ---
+// ================================================================
+// FEATURE 2: ITINERARY
+// ================================================================
+function buildDayTabs() {
+  const tabs = document.getElementById('dayTabs');
+  const sel  = document.getElementById('evDay');
+  tabs.innerHTML = TRIP_DAYS.map((d, i) =>
+    `<button class="day-tab ${i === activeDay ? 'active' : ''}" onclick="setDay(${i})">${d}</button>`
+  ).join('');
+  sel.innerHTML = TRIP_DAYS.map((d, i) => `<option value="${i}">${d}</option>`).join('');
+  sel.value = activeDay;
+}
+
+function setDay(i) {
+  activeDay = i;
+  buildDayTabs();
+  renderItinerary();
+}
+
+function renderItinerary() {
+  const list = document.getElementById('itineraryList');
+  const events = (state.itinerary || [])
+    .filter(e => e.day === activeDay)
+    .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+
+  if (!events.length) {
+    list.innerHTML = `<div style="opacity:0.4;font-size:0.9rem;padding:8px 0;">No events for ${TRIP_DAYS[activeDay]} yet.</div>`;
+    return;
+  }
+  list.innerHTML = events.map(e => `
+    <div class="event-row">
+      <div class="event-time">${e.time || '--:--'}</div>
+      <div class="event-body">
+        <div class="event-title">${e.title}</div>
+        ${e.note ? `<div class="event-note">${e.note}</div>` : ''}
+      </div>
+      <div class="event-actions">
+        <button onclick="deleteEvent(${e.id})" style="background:none;border:none;color:white;opacity:0.3;cursor:pointer;font-size:1rem">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function showAddEvent() {
+  document.getElementById('eventForm').style.display = 'block';
+  document.getElementById('evDay').value = activeDay;
+  document.getElementById('evTitle').focus();
+}
+function cancelEvent() { document.getElementById('eventForm').style.display = 'none'; }
+
+function saveEvent() {
+  const title = document.getElementById('evTitle').value.trim();
+  if (!title) { alert('Please enter a title'); return; }
+  const event = {
+    id:    Date.now(),
+    day:   parseInt(document.getElementById('evDay').value),
+    time:  document.getElementById('evTime').value,
+    title,
+    note:  document.getElementById('evNote').value.trim()
+  };
+  state.itinerary = [...(state.itinerary || []), event];
+  document.getElementById('evTitle').value = '';
+  document.getElementById('evNote').value  = '';
+  document.getElementById('evTime').value  = '';
+  document.getElementById('eventForm').style.display = 'none';
+  activeDay = event.day;
+  buildDayTabs();
+  renderItinerary();
+  saveAndSync();
+}
+
+function deleteEvent(id) {
+  if (!confirm('Delete this event?')) return;
+  state.itinerary = state.itinerary.filter(e => e.id !== id);
+  renderItinerary();
+  saveAndSync();
+}
+
+// ================================================================
+// FEATURE 4: SHARED NOTES
+// ================================================================
+function renderNotes() {
+  document.getElementById('notesArea').value = state.notes || '';
+}
+function saveNotes() {
+  state.notes = document.getElementById('notesArea').value;
+  const label = document.getElementById('notesSavedLabel');
+  label.textContent = 'Saved ✅';
+  setTimeout(() => { label.textContent = ''; }, 2000);
+  saveAndSync();
+}
+
+// ================================================================
+// LISTS
+// ================================================================
 function addItem(key, inpId) {
   const inp = document.getElementById(inpId);
   if (!inp.value.trim()) return;
@@ -359,173 +565,289 @@ function addItem(key, inpId) {
   inp.value = '';
   saveAndSync();
 }
-
-// FIX: toggleItem for 'shopping' — only toggle checked state if user cancels the move dialog.
 function toggleItem(key, id) {
   const item = state[key].find(i => i.id === id);
   if (!item) return;
-
-  if (key === 'shopping') {
-    if (!item.checked) {
-      if (confirm("Move this to Packing List?")) {
-        state.packing.push({ id: Date.now(), name: item.name, checked: false });
-        state.shopping = state.shopping.filter(i => i.id !== id);
-        saveAndSync();
-        return;
-      }
+  if (key === 'shopping' && !item.checked) {
+    if (confirm('Move this to Packing List?')) {
+      state.packing.push({ id: Date.now(), name: item.name, checked: false });
+      state.shopping = state.shopping.filter(i => i.id !== id);
+      saveAndSync(); return;
     }
-    item.checked = !item.checked;
-  } else {
-    item.checked = !item.checked;
   }
+  item.checked = !item.checked;
   saveAndSync();
 }
-
 function deleteItem(key, id) {
   state[key] = state[key].filter(i => i.id !== id);
   saveAndSync();
 }
 
-// Debounced sync for list changes
-let syncTimer = null;
-function saveAndSync() {
-  saveLocal();
-  render();
-  setStatus('☁️ Pending…');
-  clearTimeout(syncTimer);
-  syncTimer = setTimeout(syncToCloud, 2000);
-}
-
-// --- TICKET VAULT ---
-function processTicket(input) {
+// ================================================================
+// IMAGE PROCESSING (shared for tickets + memories)
+// ================================================================
+function processTicket(input, forWhat) {
   const file = input.files[0];
   if (!file) return;
-  // Compress image before storing: resize to max 1200px wide, quality 0.7
-  const img = new Image();
+  tempImgFor = forWhat;
+  const imgEl = new Image();
   const url = URL.createObjectURL(file);
-  img.onload = () => {
+  imgEl.onload = () => {
     const MAX = 1200;
-    let w = img.width, h = img.height;
+    let w = imgEl.width, h = imgEl.height;
     if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
     const canvas = document.createElement('canvas');
     canvas.width = w; canvas.height = h;
-    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-    tempImg = canvas.toDataURL('image/jpeg', 0.7);
+    canvas.getContext('2d').drawImage(imgEl, 0, 0, w, h);
+    tempImg = canvas.toDataURL('image/jpeg', 0.75);
     URL.revokeObjectURL(url);
-    document.getElementById('previewImg').src = tempImg;
-    document.getElementById('photoPreview').style.display = 'block';
-    setStatus('📸 Photo Ready');
+
+    if (forWhat === 'ticket') {
+      document.getElementById('previewImg').src = tempImg;
+      document.getElementById('photoPreview').style.display = 'block';
+      setStatus('📸 Photo Ready');
+    } else {
+      document.getElementById('memPreviewImg').src = tempImg;
+      document.getElementById('memPreviewRow').style.display = 'block';
+    }
   };
-  img.src = url;
+  imgEl.src = url;
 }
 
+// ================================================================
+// TICKETS
+// ================================================================
 async function addTicket() {
   const nameInput = document.getElementById('ticketName');
-  if (!nameInput.value.trim() || !tempImg) {
-    alert("Please enter a name and take/select a photo first!");
-    return;
-  }
+  if (!nameInput.value.trim() || !tempImg) { alert('Please enter a name and add a photo first!'); return; }
   const id = Date.now();
   tickets.push({ id, name: nameInput.value.trim() });
-  await saveImage(id, tempImg);  // stored in IndexedDB — no size limit
+  await idb.save(id, tempImg);
   nameInput.value = '';
   tempImg = null;
   document.getElementById('photoPreview').style.display = 'none';
   document.getElementById('ticketFile').value = '';
   saveLocal();
-  await renderTicketsWithImages();
+  await renderTickets();
   setStatus('☁️ Pending…');
   clearTimeout(syncTimer);
   syncTimer = setTimeout(syncToCloud, 2000);
 }
 
 async function deleteTicket(id) {
-  const ticket = tickets.find(t => t.id === id);
-  const name = ticket ? ticket.name : 'this ticket';
-  if (!confirm(`Delete "${name}"? This will remove it from all devices.`)) return;
-
+  const t = tickets.find(t => t.id === id);
+  if (!confirm(`Delete "${t?.name || 'this ticket'}"? This will remove it from all devices.`)) return;
   tickets = tickets.filter(t => t.id !== id);
-  deletedIds = [...new Set([...deletedIds, String(id)])]; // tombstone so merge never re-adds it
-  await deleteImage(id); // remove from local IndexedDB
-
-  // Remove from Dropbox immediately (don't wait for debounced sync)
+  deletedIds = [...new Set([...deletedIds, String(id)])];
+  await idb.del(id);
   const token = localStorage.getItem('dropbox_token');
-  if (token) {
-    try {
-      await fetch('https://api.dropboxapi.com/2/files/delete_v2', {
-        method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ path: `/tickets/${id}` })
-      });
-    } catch(e) { /* best-effort */ }
-  }
-
+  if (token) { try { await dbx.delete(token, `/images/${id}`); } catch(e) {} }
   saveLocal();
-  await renderTicketsWithImages();
+  await renderTickets();
   setStatus('☁️ Pending…');
   clearTimeout(syncTimer);
-  syncTimer = setTimeout(syncToCloud, 2000); // also updates the manifest
+  syncTimer = setTimeout(syncToCloud, 2000);
 }
 
-async function viewTicket(id) {
-  const img = await getImage(id);
-  if (!img) { alert("Image not yet downloaded from cloud. Try syncing again."); return; }
+async function renderTickets() {
+  const el = document.getElementById('ticketList');
+  if (!el) return;
+  const rows = await Promise.all(tickets.map(async t => {
+    const img = await idb.get(t.id);
+    return `
+      <div class="ticket-card" onclick="viewImage(${t.id})">
+        ${img ? `<img src="${img}" class="ticket-thumb">` : `<div class="ticket-thumb" style="display:flex;align-items:center;justify-content:center;font-size:1.5rem;">🎟️</div>`}
+        <span style="flex:1">${t.name}</span>
+        <button onclick="event.stopPropagation();deleteTicket(${t.id})" style="background:none;border:none;color:white;opacity:0.3;font-size:1rem;cursor:pointer">✕</button>
+      </div>`;
+  }));
+  el.innerHTML = rows.join('');
+}
+
+async function viewImage(id) {
+  const img = await idb.get(id);
+  if (!img) { alert('Image not available yet. Try syncing.'); return; }
   document.getElementById('fullImg').src = img;
   document.getElementById('imgModal').style.display = 'flex';
 }
 
-// --- UI RENDER (lists only — tickets handled by renderTicketsWithImages) ---
+// ================================================================
+// FEATURE 5: MEMORIES
+// ================================================================
+async function addMemory() {
+  if (!tempImg) return;
+  const id = Date.now();
+  const caption = document.getElementById('memCaption').value.trim();
+  state.memories = [...(state.memories || []), { id, caption }];
+  await idb.save(id, tempImg);
+  tempImg = null;
+  document.getElementById('memPreviewRow').style.display = 'none';
+  document.getElementById('memCaption').value = '';
+  document.getElementById('memFile').value = '';
+  saveLocal();
+  await renderMemories();
+  setStatus('☁️ Pending…');
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(syncToCloud, 2000);
+}
+
+function cancelMemory() {
+  tempImg = null;
+  document.getElementById('memPreviewRow').style.display = 'none';
+  document.getElementById('memFile').value = '';
+}
+
+async function deleteMemory(id) {
+  if (!confirm('Remove this memory photo?')) return;
+  state.memories = state.memories.filter(m => m.id !== id);
+  deletedIds = [...new Set([...deletedIds, String(id)])];
+  await idb.del(id);
+  const token = localStorage.getItem('dropbox_token');
+  if (token) { try { await dbx.delete(token, `/images/${id}`); } catch(e) {} }
+  saveLocal();
+  await renderMemories();
+  setStatus('☁️ Pending…');
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(syncToCloud, 2000);
+}
+
+async function renderMemories() {
+  const grid = document.getElementById('memoriesGrid');
+  if (!grid) return;
+  if (!state.memories || !state.memories.length) {
+    grid.innerHTML = `<div style="opacity:0.4;font-size:0.9rem;padding:8px 0;grid-column:1/-1;">No memories yet — add photos during your trip! 📸</div>`;
+    return;
+  }
+  const cells = await Promise.all(state.memories.map(async m => {
+    const img = await idb.get(m.id);
+    return `
+      <div class="memory-cell" onclick="viewImage(${m.id})">
+        ${img ? `<img src="${img}" loading="lazy">` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:2rem;opacity:0.3">🖼️</div>`}
+        <button class="mem-del" onclick="event.stopPropagation();deleteMemory(${m.id})">✕</button>
+        ${m.caption ? `<div class="mem-caption">${m.caption}</div>` : ''}
+      </div>`;
+  }));
+  grid.innerHTML = cells.join('');
+}
+
+// ================================================================
+// FEATURE 10: CONFETTI + ARRIVED MODE
+// ================================================================
+function checkArrived() {
+  const now = Date.now();
+  const diff = TRAVEL_DATE - now;
+  if (diff <= 0 && !confettiFired) {
+    confettiFired = true;
+    document.getElementById('bgEl').classList.add('arrived');
+    document.getElementById('arrivedBanner').style.display = 'block';
+    document.getElementById('countdownCard').style.display = 'none';
+    document.getElementById('headerSub').textContent = "You're here! 🇬🇧";
+    fireConfetti();
+    // Repeat confetti a few times for drama
+    setTimeout(fireConfetti, 3000);
+    setTimeout(fireConfetti, 6000);
+  }
+}
+
+function fireConfetti() {
+  const colors = ['#DC143C','#ffffff','#002147','#FFD700','#ff69b4','#00bfff'];
+  const canvas = document.getElementById('confettiCanvas');
+  canvas.style.display = 'block';
+  for (let i = 0; i < 120; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    const size = Math.random() * 10 + 6;
+    piece.style.cssText = `
+      left: ${Math.random() * 100}vw;
+      width: ${size}px; height: ${size}px;
+      background: ${colors[Math.floor(Math.random() * colors.length)]};
+      --drift: ${(Math.random() - 0.5) * 200}px;
+      animation-duration: ${Math.random() * 2 + 2.5}s;
+      animation-delay: ${Math.random() * 1.5}s;
+      border-radius: ${Math.random() > 0.5 ? '50%' : '2px'};
+      opacity: ${Math.random() * 0.5 + 0.5};
+    `;
+    document.body.appendChild(piece);
+    piece.addEventListener('animationend', () => piece.remove());
+  }
+  // Hide canvas after confetti
+  setTimeout(() => { canvas.style.display = 'none'; }, 6000);
+}
+
+// ================================================================
+// COUNTDOWN
+// ================================================================
+function updateCD() {
+  const diff = TRAVEL_DATE - Date.now();
+  if (diff <= 0) { checkArrived(); return; }
+  document.getElementById('cdDays').textContent  = Math.floor(diff / 86400000);
+  document.getElementById('cdHours').textContent = Math.floor((diff % 86400000) / 3600000);
+  document.getElementById('cdMins').textContent  = Math.floor((diff % 3600000) / 60000);
+}
+
+// ================================================================
+// WEATHER
+// ================================================================
+async function fetchWeather() {
+  try {
+    const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=51.5074&longitude=-0.1278&current_weather=true');
+    const data = await res.json();
+    const wmo = data.current_weather.weathercode;
+    const sky = wmo <= 1 ? '☀️ Clear' : wmo <= 3 ? '⛅ Cloudy' : wmo <= 67 ? '🌧️ Rain' : '❄️ Snow';
+    document.getElementById('londonTemp').textContent = Math.round(data.current_weather.temperature) + '°C';
+    document.getElementById('londonSky').textContent  = sky;
+  } catch(e) {}
+}
+
+// ================================================================
+// MAIN RENDER
+// ================================================================
 function render() {
-  const configs = [
-    { k: 'shopping', e: 'shopList' },
-    { k: 'ukShopping', e: 'ukShopList' },
-    { k: 'packing', e: 'packList' }
-  ];
-  configs.forEach(conf => {
-    const listEl = document.getElementById(conf.e);
-    if (!listEl) return;
-    listEl.innerHTML = state[conf.k].map(i => `
+  // Lists
+  ['shopping','ukShopping','packing'].forEach(key => {
+    const el = document.getElementById({ shopping:'shopList', ukShopping:'ukShopList', packing:'packList' }[key]);
+    if (!el) return;
+    el.innerHTML = state[key].map(i => `
       <div class="item-row ${i.checked ? 'checked' : ''}">
-        <input type="checkbox" ${i.checked ? 'checked' : ''} onchange="toggleItem('${conf.k}', ${i.id})">
+        <input type="checkbox" ${i.checked ? 'checked' : ''} onchange="toggleItem('${key}',${i.id})">
         <span class="item-name">${i.name}</span>
-        <button onclick="deleteItem('${conf.k}', ${i.id})" style="background:none; border:none; color:white; opacity:0.3">✕</button>
+        <button onclick="deleteItem('${key}',${i.id})" style="background:none;border:none;color:white;opacity:0.3;cursor:pointer">✕</button>
       </div>`).join('');
   });
+  renderItinerary();
+  renderNotes();
 }
 
-function updateCD() {
-  const diff = TRAVEL_DATE - new Date().getTime();
-  if (diff < 0) return;
-  document.getElementById('cdDays').textContent = Math.floor(diff / 86400000);
-  document.getElementById('cdHours').textContent = Math.floor((diff % 86400000) / 3600000);
-  document.getElementById('cdMins').textContent = Math.floor((diff % 3600000) / 60000);
-}
-
-// --- NOTIFICATIONS ---
+// ================================================================
+// NOTIFICATIONS
+// ================================================================
 function requestNotifPermission() {
   Notification.requestPermission().then(p => {
-    if (p === "granted") {
+    if (p === 'granted') {
       document.getElementById('notifStatus').textContent = 'Alerts: Active';
-      new Notification("London Trip", { body: "Morning countdown alerts enabled!" });
+      new Notification('London Trip', { body: 'Morning countdown alerts enabled!' });
     }
   });
 }
-
 function checkNotif() {
   const now = new Date();
   if (now.getHours() === 9 && localStorage.getItem('last_notif') !== now.toDateString()) {
     if (Notification.permission === 'granted') {
       const days = Math.floor((TRAVEL_DATE - now.getTime()) / 86400000);
-      new Notification("Good Morning!", { body: `${days} days until London! 🇬🇧` });
+      new Notification('Good Morning!', { body: days > 0 ? `${days} days until London! 🇬🇧` : "You're in London! 🎉🇬🇧" });
       localStorage.setItem('last_notif', now.toDateString());
     }
   }
 }
 
-// STARTUP — open IndexedDB first, then load everything
+// ================================================================
+// STARTUP
+// ================================================================
 openDB().then(async () => {
   await loadLocal();
+  buildDayTabs();
   fetchWeather();
+  checkArrived();
   if (localStorage.getItem('dropbox_token')) {
     document.getElementById('tokenInput').value = localStorage.getItem('dropbox_token');
     syncFromCloud();
