@@ -67,6 +67,8 @@
 
   .sync-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
   .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: #4caf50; display: inline-block; margin-right: 6px; }
+  .sync-dot.loading { background: #ffc107; }
+  .sync-dot.error { background: var(--red); }
 </style>
 </head>
 <body>
@@ -81,9 +83,17 @@
     <p>May 11, 2026 · 3:00 PM</p>
   </div>
 
+  <details class="glass" style="padding: 15px;">
+    <summary style="color:var(--text-muted); cursor:pointer;">⚙️ Dropbox Configuration</summary>
+    <div class="input-row" style="margin-top:10px">
+      <input type="text" id="tokenInput" placeholder="Paste Access Token..." />
+      <button class="btn btn-red" onclick="saveToken()">Save</button>
+    </div>
+  </details>
+
   <div class="sync-bar glass">
-    <span style="font-size:0.8rem; flex:1;"><span class="sync-dot"></span><span id="syncStatus">Ready</span></span>
-    <button class="btn btn-glass btn-sm" onclick="syncFromCloud()">🔄 Refresh</button>
+    <span style="font-size:0.8rem; flex:1;"><span class="sync-dot" id="syncDot"></span><span id="syncStatus">Ready</span></span>
+    <button class="btn btn-glass btn-sm" onclick="syncFromCloud()">🔄 Refresh Cloud</button>
   </div>
 
   <div class="glass">
@@ -140,9 +150,16 @@
 
 <script>
 const TRAVEL_DATE = new Date('2026-05-11T15:00:00');
+const DROPBOX_FILE = '/trip_data.json';
 let state = { shopping: [], ukShopping: [], packing: [], tickets: [] };
 let pendingTicketImage = null;
 
+// ========= Data Helpers =========
+function getToken() { return localStorage.getItem('dropbox_token') || ''; }
+function saveToken() {
+  const val = document.getElementById('tokenInput').value.trim();
+  if (val) { localStorage.setItem('dropbox_token', val); syncFromCloud(); }
+}
 function saveLocal() { localStorage.setItem('london_trip_v3', JSON.stringify(state)); }
 function loadLocal() { 
     const raw = localStorage.getItem('london_trip_v3'); 
@@ -150,6 +167,50 @@ function loadLocal() {
     render(); 
 }
 
+// ========= Cloud Sync =========
+async function syncToCloud() {
+  const token = getToken();
+  if (!token) return;
+  setSyncStatus('Saving...', 'loading');
+  try {
+    await fetch('https://content.dropboxapi.com/2/files/upload', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/octet-stream',
+        'Dropbox-API-Arg': JSON.stringify({ path: DROPBOX_FILE, mode: 'overwrite' })
+      },
+      body: JSON.stringify(state)
+    });
+    setSyncStatus('Cloud Synced ✅');
+  } catch (e) { setSyncStatus('Sync Failed ❌', 'error'); }
+}
+
+async function syncFromCloud() {
+  const token = getToken();
+  if (!token) return setSyncStatus('No Token', 'error');
+  setSyncStatus('Fetching...', 'loading');
+  try {
+    const res = await fetch('https://content.dropboxapi.com/2/files/download', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}`, 'Dropbox-API-Arg': JSON.stringify({ path: DROPBOX_FILE }) }
+    });
+    if (res.ok) {
+      state = await res.json();
+      saveLocal();
+      render();
+      setSyncStatus('Cloud Synced ✅');
+    }
+  } catch (e) { setSyncStatus('Fetch failed', 'error'); }
+}
+
+function setSyncStatus(msg, type='ok') {
+  document.getElementById('syncStatus').textContent = msg;
+  const dot = document.getElementById('syncDot');
+  dot.className = 'sync-dot ' + (type === 'error' ? 'error' : (type === 'loading' ? 'loading' : ''));
+}
+
+// ========= List Logic =========
 function addItem(listKey, inputId) {
   const inp = document.getElementById(inputId);
   if (!inp.value.trim()) return;
@@ -162,7 +223,6 @@ function toggleItem(listKey, id) {
   const item = state[listKey].find(i => i.id === id);
   if (item) {
     item.checked = !item.checked;
-    // Keep the "Move to Packing" question for the "Buy for Trip" list
     if (listKey === 'shopping' && item.checked) {
       if(confirm(`Move "${item.name}" to Packing List?`)) {
         state.packing.push({ id: Date.now(), name: item.name, checked: false });
@@ -191,58 +251,4 @@ function addTicket() {
   if (!name) return;
   state.tickets.push({ id: Date.now(), name, imageData: pendingTicketImage, addedAt: new Date().toLocaleDateString() });
   document.getElementById('ticketName').value = '';
-  pendingTicketImage = null;
-  saveAndSync();
-}
-
-function deleteTicket(id) {
-  state.tickets = state.tickets.filter(t => t.id !== id);
-  saveAndSync();
-}
-
-function render() {
-  const lists = [
-    { key: 'shopping', el: 'shopList' },
-    { key: 'ukShopping', el: 'ukShopList' },
-    { key: 'packing', el: 'packList' }
-  ];
-
-  lists.forEach(l => {
-    const div = document.getElementById(l.el);
-    div.innerHTML = state[l.key].map(i => `
-      <div class="shopping-item ${i.checked ? 'checked' : ''}">
-        <input type="checkbox" ${i.checked ? 'checked' : ''} onchange="toggleItem('${l.key}', ${i.id})">
-        <span class="item-name">${i.name}</span>
-        <button class="item-delete" onclick="deleteItem('${l.key}', ${i.id})">✕</button>
-      </div>`).join('');
-  });
-
-  const tDiv = document.getElementById('ticketList');
-  tDiv.innerHTML = state.tickets.map(t => `
-    <div class="ticket-card">
-      ${t.imageData ? `<img class="ticket-thumb" src="${t.imageData}" onclick="openModal('${t.imageData}')">` : '<div class="ticket-thumb-placeholder">🎟️</div>'}
-      <div class="ticket-info">
-        <div class="ticket-name">${t.name}</div>
-        <button class="btn btn-sm" style="margin-top:5px; background:rgba(255,255,255,0.1)" onclick="deleteTicket(${t.id})">🗑 Delete</button>
-      </div>
-    </div>`).join('');
-}
-
-function updateCountdown() {
-  const diff = TRAVEL_DATE - new Date();
-  if (diff <= 0) return;
-  document.getElementById('cdDays').textContent = String(Math.floor(diff / 86400000)).padStart(2,'0');
-  document.getElementById('cdHours').textContent = String(Math.floor((diff % 86400000) / 3600000)).padStart(2,'0');
-  document.getElementById('cdMins').textContent = String(Math.floor((diff % 3600000) / 60000)).padStart(2,'0');
-}
-
-function saveAndSync() { saveLocal(); render(); } // Add Dropbox fetch here if needed
-function openModal(src) { document.getElementById('modalImg').src = src; document.getElementById('imgModal').classList.add('open'); }
-function closeModal() { document.getElementById('imgModal').classList.remove('open'); }
-
-loadLocal();
-setInterval(updateCountdown, 1000);
-updateCountdown();
-</script>
-</body>
-</html>
+  pendingTicketImage = null
