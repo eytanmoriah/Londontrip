@@ -279,6 +279,18 @@
   .mem-preview { display: none; margin-bottom: 14px; }
   .mem-preview.on { display: block; }
 
+  /* ── Traveler settings inputs ── */
+  #travelerSettingsList .item-row input[type="text"] {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px; color: #fff;
+    font-family: 'DM Sans', sans-serif;
+  }
+  #travelerSettingsList .item-row input[type="text"]:focus {
+    border-color: rgba(255,255,255,0.5);
+    outline: none;
+  }
+
   /* ── Notes ── */
   .notes-ok { font-size: 0.75rem; color: #4caf50; }
 
@@ -398,6 +410,12 @@
 
       <!-- ── TAB 0: PREP ── -->
       <div class="tab-pnl">
+
+        <!-- Traveler switcher -->
+        <div class="glass" style="padding:12px 16px;margin-bottom:14px;">
+          <div style="font-size:0.72rem;opacity:0.5;letter-spacing:1px;text-transform:uppercase;margin-bottom:9px;">Viewing lists for</div>
+          <div class="day-tabs" id="travelerTabs" style="margin-bottom:0;"></div>
+        </div>
 
         <div class="glass">
           <h3 style="margin-bottom:14px">🛍️ Buy Before Trip</h3>
@@ -564,6 +582,17 @@
         </div>
 
         <div class="glass" style="padding:14px 18px;">
+          <div class="sec-hdr" style="margin-bottom:12px;">
+            <div>
+              <div style="font-size:0.85rem;font-weight:600;">👥 Travelers</div>
+              <div style="font-size:0.72rem;opacity:0.5;margin-top:2px;">Each person gets their own prep lists</div>
+            </div>
+            <button class="btn btn-sm btn-red" onclick="addTraveler()">+ Add Person</button>
+          </div>
+          <div id="travelerSettingsList"></div>
+        </div>
+
+        <div class="glass" style="padding:14px 18px;">
           <div style="font-size:0.85rem;font-weight:600;margin-bottom:6px;">🔔 Notifications</div>
           <div style="font-size:0.78rem;opacity:0.55;margin-bottom:12px;">Get a morning alert each day counting down to your trip.</div>
           <button class="btn btn-glass" style="width:100%;" onclick="requestNotifPermission()">Enable Morning Alerts</button>
@@ -627,11 +656,15 @@ const TRIP_DAYS   = ['May 11','May 12','May 13','May 14','May 15'];
 // ════════════════════════════════════════
 // STATE
 // ════════════════════════════════════════
-let state = { shopping:[],ukShopping:[],packing:[],itinerary:[],notes:'',memories:[] };
+// Travelers: array of {id, name}
+// personLists: { [travelerId]: {shopping:[], packing:[], ukShopping:[]} }
+// Shared: itinerary, notes, memories, tickets
+let travelers = [{id:'p1', name:'Person 1'}];
+let personLists = { p1: {shopping:[], packing:[], ukShopping:[]} };
+let state = { itinerary:[], notes:'', memories:[] };
 let tickets=[],deletedIds=[],tempImg=null;
-let activeDay=0,currentTab=0,confettiFired=false;
-// FIX 4 (race condition): sync lock
-let syncing=false,syncTimer=null;
+let activeDay=0, activeTraveler='p1', currentTab=0, confettiFired=false;
+let syncing=false, syncTimer=null;
 
 // ════════════════════════════════════════
 // INDEXEDDB
@@ -674,16 +707,34 @@ const idb={
 // LOCAL STORAGE
 // ════════════════════════════════════════
 function saveLocal(){
-  try{localStorage.setItem('ldn_v10',JSON.stringify({state,tickets,deletedIds}));}catch(e){}
+  try{localStorage.setItem('ldn_v11',JSON.stringify({state,tickets,deletedIds,travelers,personLists}));}catch(e){}
 }
+function defaultPersonLists(id){ return {shopping:[],packing:[],ukShopping:[]}; }
 async function loadLocal(){
-  const raw=localStorage.getItem('ldn_v10')||localStorage.getItem('ldn_v9');
-  if(raw){
+  // Try v11 first, then migrate from v10/v9
+  const raw11=localStorage.getItem('ldn_v11');
+  const rawOld=localStorage.getItem('ldn_v10')||localStorage.getItem('ldn_v9');
+  if(raw11){
     try{
-      const d=JSON.parse(raw);
-      state={...state,...d.state};
-      tickets=d.tickets||[];
-      deletedIds=d.deletedIds||[];
+      const d=JSON.parse(raw11);
+      state      ={itinerary:[],notes:'',memories:[],...d.state};
+      tickets    =d.tickets    ||[];
+      deletedIds =d.deletedIds ||[];
+      travelers  =d.travelers  ||[{id:'p1',name:'Person 1'}];
+      personLists=d.personLists||{};
+      // Ensure every traveler has a list object
+      travelers.forEach(t=>{ if(!personLists[t.id]) personLists[t.id]=defaultPersonLists(t.id); });
+    }catch(e){}
+  } else if(rawOld){
+    // Migrate old flat lists → single traveler
+    try{
+      const d=JSON.parse(rawOld);
+      const old=d.state||{};
+      state      ={itinerary:old.itinerary||[],notes:old.notes||'',memories:old.memories||[]};
+      tickets    =d.tickets    ||[];
+      deletedIds =d.deletedIds ||[];
+      travelers  =[{id:'p1',name:'Person 1'}];
+      personLists={ p1:{ shopping:old.shopping||[], packing:old.packing||[], ukShopping:old.ukShopping||[] } };
     }catch(e){}
   }
   render();
@@ -736,12 +787,13 @@ async function getAccessToken(){
       headers:{'Content-Type':'application/x-www-form-urlencoded'},
       body:new URLSearchParams({grant_type:'refresh_token',refresh_token:refresh,client_id:key,client_secret:secret})
     });
-    if(!r.ok){setStatus('☁️ Auth Error ❌');return null;}
+    if(!r.ok) return null; // silently fail — syncFromCloud will surface the error
     const d=await r.json();
+    if(!d.access_token) return null;
     cachedToken=d.access_token;
     tokenExpiry=Date.now()+(d.expires_in||14400)*1000;
     return cachedToken;
-  }catch(e){setStatus('☁️ Auth Failed ❌');return null;}
+  }catch(e){ return null; }
 }
 
 function hasDbxCredentials(){
@@ -865,23 +917,40 @@ async function syncToCloud(){
     let cloud={};
     try{const r=await dbx.down(tok,'/trip_data.json');if(r.ok)cloud=await r.json();}catch(e){}
     deletedIds=[...new Set([...deletedIds,...(cloud.deletedIds||[])].map(String))];
-    // FIX 10: merge all lists including itinerary
     const mT=mergeById(cloud.tickets  ||[],tickets);
     const mM=mergeById(cloud.memories ||[],state.memories);
     const mI=mergeById(cloud.itinerary||[],state.itinerary);
-    ['shopping','ukShopping','packing'].forEach(k=>{
-      if(cloud[k]) state[k]=mergeById(cloud[k],state[k]);
+
+    // Merge per-traveler lists
+    const cloudPL = cloud.personLists||{};
+    const mergedPL={};
+    const allTravIds=[...new Set([...Object.keys(personLists),...Object.keys(cloudPL)])];
+    allTravIds.forEach(tid=>{
+      const local=personLists[tid]||defaultPersonLists(tid);
+      const remote=cloudPL[tid]||defaultPersonLists(tid);
+      mergedPL[tid]={
+        shopping:  mergeById(remote.shopping  ||[],local.shopping  ||[]),
+        packing:   mergeById(remote.packing   ||[],local.packing   ||[]),
+        ukShopping:mergeById(remote.ukShopping||[],local.ukShopping||[])
+      };
     });
+
+    // Merge travelers list
+    const cloudTravelers=cloud.travelers||[];
+    const travMap=new Map();
+    [...cloudTravelers,...travelers].forEach(t=>{ if(!travMap.has(t.id)) travMap.set(t.id,t); else travMap.set(t.id,{...travMap.get(t.id),...t}); });
+    const mergedTravelers=Array.from(travMap.values());
+
     const payload={
-      shopping:state.shopping,ukShopping:state.ukShopping,packing:state.packing,
-      itinerary:mI,notes:state.notes,
+      itinerary:mI, notes:state.notes,
+      travelers:mergedTravelers,
+      personLists:mergedPL,
       tickets: mT.map(t=>({id:t.id,name:t.name})),
       memories:mM.map(m=>({id:m.id,caption:m.caption})),
       deletedIds
     };
     const res=await dbx.up(tok,'/trip_data.json',JSON.stringify(payload));
     if(!res.ok){setStatus('☁️ Upload Error ❌');syncing=false;return;}
-    // Upload new images
     const localKeys=new Set((await idb.allKeys()).map(String));
     for(const item of [...mT,...mM]){
       if(localKeys.has(String(item.id))){
@@ -889,8 +958,11 @@ async function syncToCloud(){
         if(img)try{await dbx.up(tok,'/images/'+item.id,img);}catch(e){}
       }
     }
-    tickets=mT;state.memories=mM;state.itinerary=mI;
-    saveLocal();await renderTickets();await renderMemories();
+    tickets=mT; state.memories=mM; state.itinerary=mI;
+    travelers=mergedTravelers; personLists=mergedPL;
+    // Ensure activeTraveler still valid
+    if(!travelers.find(t=>t.id===activeTraveler)) activeTraveler=travelers[0].id;
+    saveLocal(); render(); await renderTickets(); await renderMemories();
     setStatus('☁️ Synced ✅ '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
   }catch(e){setStatus('☁️ Offline ❌');}
   syncing=false;
@@ -899,7 +971,7 @@ async function syncToCloud(){
 async function syncFromCloud(){
   if(syncing) return;
   const tok=await getAccessToken();
-  if(!tok) return;
+  if(!tok){setStatus('☁️ Auth Error — check credentials');return;}
   syncing=true;setStatus('☁️ Connecting…');
   try{
     const res=await dbx.down(tok,'/trip_data.json');
@@ -907,15 +979,36 @@ async function syncFromCloud(){
     const data=await res.json();
     deletedIds=[...new Set([...deletedIds,...(data.deletedIds||[])].map(String))];
     const dead=new Set(deletedIds);
-    // FIX 10: all lists merged, never replaced
-    ['shopping','ukShopping','packing'].forEach(k=>{
-      if(data[k]) state[k]=mergeById(data[k],state[k]);
-    });
+
     if(data.itinerary) state.itinerary=mergeById(data.itinerary,state.itinerary);
     if(data.notes)     state.notes=data.notes;
     tickets       =mergeById(data.tickets ||[],tickets);
     state.memories=mergeById(data.memories||[],state.memories).filter(m=>!dead.has(String(m.id)));
-    // Download missing images — FIX 7: validate data: prefix
+
+    // Merge travelers
+    if(data.travelers&&data.travelers.length){
+      const travMap=new Map();
+      [...data.travelers,...travelers].forEach(t=>{ if(!travMap.has(t.id)) travMap.set(t.id,t); else travMap.set(t.id,{...travMap.get(t.id),...t}); });
+      travelers=Array.from(travMap.values());
+    }
+
+    // Merge per-traveler lists
+    if(data.personLists){
+      Object.keys(data.personLists).forEach(tid=>{
+        if(!personLists[tid]) personLists[tid]=defaultPersonLists(tid);
+        const remote=data.personLists[tid];
+        personLists[tid]={
+          shopping:  mergeById(remote.shopping  ||[],personLists[tid].shopping  ||[]),
+          packing:   mergeById(remote.packing   ||[],personLists[tid].packing   ||[]),
+          ukShopping:mergeById(remote.ukShopping||[],personLists[tid].ukShopping||[])
+        };
+      });
+    }
+    // Ensure every traveler has a list object
+    travelers.forEach(t=>{ if(!personLists[t.id]) personLists[t.id]=defaultPersonLists(t.id); });
+    if(!travelers.find(t=>t.id===activeTraveler)) activeTraveler=travelers[0].id;
+
+    // Download missing images
     const localKeys=new Set((await idb.allKeys()).map(String));
     for(const id of [...tickets.map(t=>t.id),...state.memories.map(m=>m.id)]){
       if(!localKeys.has(String(id))){
@@ -1041,28 +1134,31 @@ function saveNotes(){
 }
 
 // ════════════════════════════════════════
-// LISTS
+// LISTS — per traveler
 // ════════════════════════════════════════
+function curLists(){ return personLists[activeTraveler]||(personLists[activeTraveler]=defaultPersonLists(activeTraveler)); }
+
 function addItem(key,inpId){
   const inp=document.getElementById(inpId);
   const val=inp.value.trim();if(!val)return;
-  state[key].push({id:Date.now(),name:val,checked:false});
+  curLists()[key].push({id:Date.now(),name:val,checked:false});
   inp.value='';saveAndSync();
 }
 function toggleItem(key,id){
-  const item=state[key].find(i=>i.id===id);if(!item)return;
-  // Shopping list: offer to move to Packing when checking off
+  const lists=curLists();
+  const item=lists[key].find(i=>i.id===id);if(!item)return;
   if(key==='shopping'&&!item.checked){
     if(confirm(`Move "${item.name}" to your Packing List?`)){
-      state.packing.push({id:Date.now(),name:item.name,checked:false});
-      state.shopping=state.shopping.filter(i=>i.id!==id);
+      lists.packing.push({id:Date.now(),name:item.name,checked:false});
+      lists.shopping=lists.shopping.filter(i=>i.id!==id);
       saveAndSync();return;
     }
   }
   item.checked=!item.checked;saveAndSync();
 }
 function deleteItem(key,id){
-  state[key]=state[key].filter(i=>i.id!==id);saveAndSync();
+  const lists=curLists();
+  lists[key]=lists[key].filter(i=>i.id!==id);saveAndSync();
 }
 
 // ════════════════════════════════════════
@@ -1252,20 +1348,78 @@ async function fetchWeather(){
 }
 
 // ════════════════════════════════════════
+// TRAVELER MANAGEMENT
+// ════════════════════════════════════════
+function renderTravelerTabs(){
+  const el=document.getElementById('travelerTabs');if(!el)return;
+  el.innerHTML=travelers.map(t=>`
+    <button class="day-tab${t.id===activeTraveler?' active':''}" onclick="switchTraveler('${t.id}')">${esc(t.name)}</button>
+  `).join('');
+}
+function switchTraveler(id){
+  activeTraveler=id;
+  if(!personLists[id]) personLists[id]=defaultPersonLists(id);
+  render();
+}
+function renderTravelerSettings(){
+  const el=document.getElementById('travelerSettingsList');if(!el)return;
+  el.innerHTML=travelers.map((t,i)=>`
+    <div class="item-row" style="gap:10px;">
+      <span style="font-size:1.1rem;">👤</span>
+      <input type="text" value="${esc(t.name)}" placeholder="Person ${i+1}"
+        style="flex:1;padding:8px 10px;font-size:0.9rem;"
+        onchange="renameTraveler('${t.id}',this.value)"
+        onblur="renameTraveler('${t.id}',this.value)">
+      ${travelers.length>1?`<button onclick="removeTraveler('${t.id}')" class="del-btn" title="Remove">✕</button>`:''}
+    </div>
+  `).join('');
+}
+function renameTraveler(id,name){
+  const t=travelers.find(t=>t.id===id);
+  if(!t||!name.trim())return;
+  t.name=name.trim();
+  renderTravelerTabs();
+  renderTravelerSettings();
+  saveAndSync();
+}
+function addTraveler(){
+  const id='p'+Date.now();
+  const n=travelers.length+1;
+  travelers.push({id,name:'Person '+n});
+  personLists[id]=defaultPersonLists(id);
+  renderTravelerSettings();
+  renderTravelerTabs();
+  saveAndSync();
+}
+function removeTraveler(id){
+  if(travelers.length<=1){alert("Can't remove the last traveler.");return;}
+  if(!confirm('Remove this traveler and all their lists?'))return;
+  travelers=travelers.filter(t=>t.id!==id);
+  delete personLists[id];
+  if(activeTraveler===id) activeTraveler=travelers[0].id;
+  renderTravelerSettings();
+  render();
+  saveAndSync();
+}
+
+// ════════════════════════════════════════
 // RENDER
 // ════════════════════════════════════════
 function render(){
+  const lists=curLists();
   ['shopping','ukShopping','packing'].forEach(key=>{
     const elId={shopping:'shopList',ukShopping:'ukShopList',packing:'packList'}[key];
     const el=document.getElementById(elId);if(!el)return;
-    if(!state[key].length){el.innerHTML=`<div class="empty">No items yet.</div>`;return;}
-    el.innerHTML=state[key].map(i=>`
+    const items=lists[key]||[];
+    if(!items.length){el.innerHTML=`<div class="empty">No items yet.</div>`;return;}
+    el.innerHTML=items.map(i=>`
       <div class="item-row${i.checked?' checked':''}">
         <input type="checkbox"${i.checked?' checked':''} onchange="toggleItem('${key}',${i.id})">
         <span class="item-name">${esc(i.name)}</span>
         <button onclick="deleteItem('${key}',${i.id})" class="del-btn">✕</button>
       </div>`).join('');
   });
+  renderTravelerTabs();
   renderItinerary();
   renderNotes();
 }
@@ -1355,6 +1509,7 @@ openDB().then(async()=>{
   checkArrived();
   updateCD();
   updateDbxUI();
+  renderTravelerSettings();
   syncFromCloud();
   if('Notification' in window&&Notification.permission==='granted')
     document.getElementById('notifStatus').textContent='Alerts: Active ✅';
