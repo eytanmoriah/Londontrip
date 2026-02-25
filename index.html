@@ -901,7 +901,6 @@ function updateDbxUI(){
 
 function mergeTravelers(a, b){
   // Keep the version of each traveler with the highest updatedAt timestamp.
-  // This ensures renames propagate correctly across all devices.
   const map = new Map();
   for(const t of [...(a||[]), ...(b||[])]){
     const existing = map.get(t.id);
@@ -911,6 +910,8 @@ function mergeTravelers(a, b){
   }
   return Array.from(map.values());
 }
+
+function mergeById(a,b){
   const dead=new Set(deletedIds.map(String));
   const seen=new Map();
   for(const t of [...(a||[]),...(b||[])]){
@@ -973,6 +974,7 @@ async function syncToCloud(){
     // Ensure activeTraveler still valid
     if(!travelers.find(t=>t.id===activeTraveler)) activeTraveler=travelers[0].id;
     saveLocal(); render(); await renderTickets(); await renderMemories();
+    renderTravelerSettings();
     setStatus('☁️ Synced ✅ '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
   }catch(e){setStatus('☁️ Offline ❌');}
   syncing=false;
@@ -1027,6 +1029,7 @@ async function syncFromCloud(){
       }
     }
     saveLocal();render();await renderTickets();await renderMemories();
+    renderTravelerSettings();
     setStatus('☁️ Connected ✅');
   }catch(e){console.error(e);setStatus('☁️ Error ❌');}
   syncing=false;
@@ -1429,7 +1432,6 @@ function render(){
       </div>`).join('');
   });
   renderTravelerTabs();
-  renderTravelerSettings();
   renderItinerary();
   renderNotes();
 }
@@ -1502,103 +1504,36 @@ function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
 })();
 
 // ════════════════════════════════════════
+// ════════════════════════════════════════
 // STARTUP
-// App Key + Secret are baked in.
-// On first load the app exchanges the auth code for a real refresh token
-// and stores it permanently. Every load after that auto-refreshes silently.
+// Credentials are baked in — all users connect automatically.
 // ════════════════════════════════════════
 const BAKED = {
-  key:    'dhaxav6kgyv59s3',
-  secret: 'jx3btsvykf9e022'
-  // NOTE: no refresh baked here — it is obtained once via exchange and
-  // stored in localStorage. See initDropboxCredentials() below.
+  key:     'dhaxav6kgyv59s3',
+  secret:  'jx3btsvykf9e022',
+  refresh: 'zEyxwmPkDiIAAAAAAAFQTMuIPf78UwRk2biV9lu8rOU'
 };
 
-async function initDropboxCredentials() {
-  // Always seed key + secret so the wizard UI knows them
-  localStorage.setItem('dbx_key',    BAKED.key);
-  localStorage.setItem('dbx_secret', BAKED.secret);
-
-  // If we already have a valid refresh token, we're done
-  if (localStorage.getItem('dbx_refresh')) {
-    updateDbxUI();
-    return true;
-  }
-
-  // No refresh token yet — check URL for OAuth callback code (?code=...)
-  // This happens when Dropbox redirects back after the user clicks Allow
-  const params = new URLSearchParams(window.location.search);
-  const code   = params.get('code');
-  if (code) {
-    // Clean the URL immediately so a reload doesn't re-use the code
-    window.history.replaceState({}, '', window.location.pathname);
-    setStatus('☁️ Completing setup…');
-    try {
-      const r = await fetch('https://api.dropbox.com/oauth2/token', {
-        method: 'POST',
-        headers: {
-          'Content-Type':  'application/x-www-form-urlencoded',
-          'Authorization': 'Basic ' + btoa(BAKED.key + ':' + BAKED.secret)
-        },
-        body: new URLSearchParams({
-          code,
-          grant_type:   'authorization_code',
-          redirect_uri: window.location.origin + window.location.pathname
-        })
-      });
-      const d = await r.json();
-      if (d.refresh_token) {
-        localStorage.setItem('dbx_refresh', d.refresh_token);
-        // Cache the fresh access token we just received
-        cachedToken  = d.access_token;
-        tokenExpiry  = Date.now() + (d.expires_in || 14400) * 1000;
-        updateDbxUI();
-        setStatus('☁️ Dropbox connected ✅');
-        return true;
-      } else {
-        const msg = d.error_description || d.error || 'Unknown error';
-        setStatus('☁️ Auth error: ' + msg);
-        // Fall through to show setup UI
-      }
-    } catch(e) {
-      setStatus('☁️ Network error during setup');
-    }
-  }
-
-  // No refresh token and no URL code — start OAuth flow automatically
-  // Build the URL, then redirect. Redirect URI must be registered in
-  // your Dropbox app settings as the exact URL of this page.
-  const authUrl = 'https://www.dropbox.com/oauth2/authorize'
-    + '?client_id='          + encodeURIComponent(BAKED.key)
-    + '&response_type=code'
-    + '&token_access_type=offline'
-    + '&redirect_uri='       + encodeURIComponent(window.location.origin + window.location.pathname);
-
-  // Show connecting message for 1 second, then redirect
-  setStatus('🔗 Redirecting to Dropbox…');
-  updateDbxUI(); // show the "setup" panel so user sees something
-  setTimeout(() => { window.location.href = authUrl; }, 1200);
-  return false;
-}
-
 openDB().then(async () => {
+  // Seed credentials for every user on every device — no setup needed
+  localStorage.setItem('dbx_key',     BAKED.key);
+  localStorage.setItem('dbx_secret',  BAKED.secret);
+  localStorage.setItem('dbx_refresh', BAKED.refresh);
+
   await loadLocal();
   buildDayTabs();
   fetchWeather();
   checkArrived();
   updateCD();
+  updateDbxUI();
   renderTravelerSettings();
-
-  const connected = await initDropboxCredentials();
-  if (connected) {
-    syncFromCloud();
-  }
+  syncFromCloud();
 
   if ('Notification' in window && Notification.permission === 'granted')
     document.getElementById('notifStatus').textContent = 'Alerts: Active ✅';
   setInterval(updateCD, 1000);
   setInterval(checkNotif, 60000 * 15);
-  setInterval(() => { if (!syncing && hasDbxCredentials()) syncFromCloud(); }, 30000);
+  setInterval(() => { if (!syncing) syncFromCloud(); }, 30000);
 });
 </script>
 </body>
