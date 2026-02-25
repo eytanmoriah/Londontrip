@@ -378,7 +378,7 @@
   <!-- Header -->
   <div class="header">
     <h1>London<span>.</span></h1>
-    <p class="header-sub" id="headerSub">May 11 – 18, 2026</p>
+    <p class="header-sub" id="headerSub">May 11 – 15, 2026</p>
   </div>
 
   <!-- Weather + sync -->
@@ -388,69 +388,9 @@
       <div id="londonSky"  style="font-size:0.78rem;opacity:0.6;margin-top:2px;">London Weather</div>
     </div>
     <div style="text-align:right;">
-      <div id="syncStatus"  style="font-size:0.75rem;color:#4caf50;">Ready</div>
-      <div id="notifStatus" style="font-size:0.75rem;opacity:0.5;margin-top:2px;">Alerts: Off</div>
+      <div id="syncStatus" style="font-size:0.75rem;color:#4caf50;">Ready</div>
     </div>
   </div>
-
-  <!-- Dropbox connection card -->
-  <div class="glass" style="padding:14px 18px;" id="dbxCard">
-    <!-- Connected state -->
-    <div id="dbxConnected" style="display:none;align-items:center;justify-content:space-between;">
-      <div>
-        <div style="font-size:0.85rem;font-weight:600;">☁️ Dropbox Connected</div>
-        <div style="font-size:0.72rem;opacity:0.5;margin-top:2px;">Auto-refreshing · never expires</div>
-      </div>
-      <div style="display:flex;gap:8px;">
-        <button class="btn btn-glass btn-icon" onclick="syncFromCloud()" title="Sync now">🔄</button>
-        <button class="btn btn-glass btn-sm" onclick="showDbxSetup()">Change</button>
-      </div>
-    </div>
-    <!-- Setup state: step 1 — App Key + Secret -->
-    <div id="dbxSetup">
-      <div style="font-size:0.85rem;font-weight:600;margin-bottom:4px;">☁️ Connect Dropbox Sync</div>
-      <div style="font-size:0.78rem;opacity:0.55;margin-bottom:12px;">One-time setup · takes ~3 minutes</div>
-      <div class="input-row" style="margin-bottom:8px;">
-        <input type="text" id="dbxKey"    placeholder="App Key"    autocomplete="off" spellcheck="false" style="font-family:monospace;font-size:0.85rem;">
-        <input type="text" id="dbxSecret" placeholder="App Secret" autocomplete="off" spellcheck="false" style="font-family:monospace;font-size:0.85rem;">
-      </div>
-      <button class="btn btn-red" style="width:100%;margin-bottom:8px;" onclick="dbxStartAuth()">Authorise with Dropbox →</button>
-      <div style="font-size:0.75rem;opacity:0.45;text-align:center;">Don't have these yet? <span style="color:var(--red);cursor:pointer;text-decoration:underline;" onclick="showDbxGuide()">See setup guide ↗</span></div>
-    </div>
-    <!-- Setup state: step 2 — paste auth code -->
-    <div id="dbxCodeStep" style="display:none;">
-      <div style="font-size:0.85rem;font-weight:600;margin-bottom:6px;">Step 2 — Paste the code</div>
-      <div style="font-size:0.78rem;opacity:0.6;margin-bottom:12px;">A Dropbox page opened in a new tab. After clicking <strong>Allow</strong>, copy the code shown and paste it here:</div>
-      <div class="input-row" style="margin-bottom:8px;">
-        <input type="text" id="dbxAuthCode" placeholder="Paste authorisation code here" autocomplete="off" spellcheck="false" style="font-family:monospace;font-size:0.85rem;" onkeydown="if(event.key==='Enter')dbxExchangeCode()">
-      </div>
-      <div style="display:flex;gap:8px;">
-        <button class="btn btn-red" style="flex:1;" onclick="dbxExchangeCode()">Finish Setup</button>
-        <button class="btn btn-glass" onclick="dbxCancelAuth()">Back</button>
-      </div>
-      <div id="dbxCodeError" style="display:none;margin-top:10px;font-size:0.78rem;color:#ff6b6b;"></div>
-    </div>
-  </div>
-
-  <!-- Dropbox setup guide modal -->
-  <div id="dbxGuideModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:500;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:20px 16px;">
-    <div style="max-width:560px;margin:0 auto;background:rgba(18,18,38,0.99);border:1px solid var(--glass-border);border-radius:20px;padding:24px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-        <h3 style="font-family:'Playfair Display',serif;font-size:1.1rem;">Dropbox Setup Guide</h3>
-        <button onclick="hideDbxGuide()" style="background:none;border:none;color:white;font-size:1.5rem;cursor:pointer;opacity:0.5;line-height:1;">✕</button>
-      </div>
-      <div style="font-size:0.85rem;line-height:1.75;opacity:0.88;">
-        <p style="margin-bottom:14px;opacity:0.65;">Do this once — then the app handles everything automatically forever.</p>
-        <div class="help-step"><span class="step-n">1</span><div><strong>Create a Dropbox App</strong><br>Go to <a href="https://www.dropbox.com/developers/apps" target="_blank" style="color:#DC143C;">dropbox.com/developers/apps</a> → <em>Create app</em> → <em>Scoped access</em> → <em>App folder</em> → any name (e.g. "LondonTrip") → <em>Create app</em>.</div></div>
-        <div class="help-step"><span class="step-n">2</span><div><strong>Leave Redirect URIs blank ← important!</strong><br>On the <em>Settings</em> tab, look for the <em>OAuth 2 Redirect URIs</em> section — make sure it is <strong>completely empty</strong>. If there's anything listed there, delete it. This is what allows the auth code to appear on screen instead of redirecting.</div></div>
-        <div class="help-step"><span class="step-n">3</span><div><strong>Set permissions</strong><br>Go to the <em>Permissions</em> tab → tick <code>files.content.read</code> and <code>files.content.write</code> → click <em>Submit</em>.</div></div>
-        <div class="help-step"><span class="step-n">4</span><div><strong>Copy your App Key and App Secret</strong><br>Go to the <em>Settings</em> tab. You'll see <strong>App key</strong> and <strong>App secret</strong> — paste both into the fields above, then tap <em>Authorise with Dropbox</em>. The rest is automatic.</div></div>
-      </div>
-      <button class="btn btn-red" style="width:100%;margin-top:18px;" onclick="hideDbxGuide()">Got it</button>
-    </div>
-  </div>
-
-  <button class="btn btn-glass" style="width:100%;font-size:0.85rem;margin-bottom:14px;" onclick="requestNotifPermission()">🔔 Enable Morning Alerts</button>
 
   <!-- Tab panels -->
   <div class="tabs-vp">
@@ -583,8 +523,76 @@
 
       </div>
 
+      <!-- ── TAB 3: SETTINGS ── -->
+      <div class="tab-pnl">
+
+        <div class="glass" style="padding:14px 18px;" id="dbxCard">
+          <!-- Connected state -->
+          <div id="dbxConnected" style="display:none;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:0.85rem;font-weight:600;">☁️ Dropbox Connected</div>
+              <div style="font-size:0.72rem;opacity:0.5;margin-top:2px;">Auto-refreshing · never expires</div>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-glass btn-icon" onclick="syncFromCloud()" title="Sync now">🔄</button>
+              <button class="btn btn-glass btn-sm" onclick="showDbxSetup()">Change</button>
+            </div>
+          </div>
+          <!-- Setup state: step 1 — App Key + Secret -->
+          <div id="dbxSetup">
+            <div style="font-size:0.85rem;font-weight:600;margin-bottom:4px;">☁️ Connect Dropbox Sync</div>
+            <div style="font-size:0.78rem;opacity:0.55;margin-bottom:12px;">One-time setup · takes ~3 minutes</div>
+            <div class="input-row" style="margin-bottom:8px;">
+              <input type="text" id="dbxKey"    placeholder="App Key"    autocomplete="off" spellcheck="false" style="font-family:monospace;font-size:0.85rem;">
+              <input type="text" id="dbxSecret" placeholder="App Secret" autocomplete="off" spellcheck="false" style="font-family:monospace;font-size:0.85rem;">
+            </div>
+            <button class="btn btn-red" style="width:100%;margin-bottom:8px;" onclick="dbxStartAuth()">Authorise with Dropbox →</button>
+            <div style="font-size:0.75rem;opacity:0.45;text-align:center;">Don't have these yet? <span style="color:var(--red);cursor:pointer;text-decoration:underline;" onclick="showDbxGuide()">See setup guide ↗</span></div>
+          </div>
+          <!-- Setup state: step 2 — paste auth code -->
+          <div id="dbxCodeStep" style="display:none;">
+            <div style="font-size:0.85rem;font-weight:600;margin-bottom:6px;">Step 2 — Paste the code</div>
+            <div style="font-size:0.78rem;opacity:0.6;margin-bottom:12px;">A Dropbox page opened in a new tab. After clicking <strong>Allow</strong>, copy the code shown and paste it here:</div>
+            <div class="input-row" style="margin-bottom:8px;">
+              <input type="text" id="dbxAuthCode" placeholder="Paste authorisation code here" autocomplete="off" spellcheck="false" style="font-family:monospace;font-size:0.85rem;" onkeydown="if(event.key==='Enter')dbxExchangeCode()">
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-red" style="flex:1;" onclick="dbxExchangeCode()">Finish Setup</button>
+              <button class="btn btn-glass" onclick="dbxCancelAuth()">Back</button>
+            </div>
+            <div id="dbxCodeError" style="display:none;margin-top:10px;font-size:0.78rem;color:#ff6b6b;"></div>
+          </div>
+        </div>
+
+        <div class="glass" style="padding:14px 18px;">
+          <div style="font-size:0.85rem;font-weight:600;margin-bottom:6px;">🔔 Notifications</div>
+          <div style="font-size:0.78rem;opacity:0.55;margin-bottom:12px;">Get a morning alert each day counting down to your trip.</div>
+          <button class="btn btn-glass" style="width:100%;" onclick="requestNotifPermission()">Enable Morning Alerts</button>
+          <div id="notifStatus" style="font-size:0.75rem;opacity:0.5;margin-top:8px;text-align:center;">Alerts: Off</div>
+        </div>
+
+      </div>
+
     </div><!-- /tabs-sl -->
   </div><!-- /tabs-vp -->
+
+  <!-- Dropbox setup guide modal — lives here so it's always in DOM -->
+  <div id="dbxGuideModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:500;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:20px 16px;">
+    <div style="max-width:560px;margin:0 auto;background:rgba(18,18,38,0.99);border:1px solid var(--glass-border);border-radius:20px;padding:24px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h3 style="font-family:'Playfair Display',serif;font-size:1.1rem;">Dropbox Setup Guide</h3>
+        <button onclick="hideDbxGuide()" style="background:none;border:none;color:white;font-size:1.5rem;cursor:pointer;opacity:0.5;line-height:1;">✕</button>
+      </div>
+      <div style="font-size:0.85rem;line-height:1.75;opacity:0.88;">
+        <p style="margin-bottom:14px;opacity:0.65;">Do this once — then the app handles everything automatically forever.</p>
+        <div class="help-step"><span class="step-n">1</span><div><strong>Create a Dropbox App</strong><br>Go to <a href="https://www.dropbox.com/developers/apps" target="_blank" style="color:#DC143C;">dropbox.com/developers/apps</a> → <em>Create app</em> → <em>Scoped access</em> → <em>App folder</em> → any name (e.g. "LondonTrip") → <em>Create app</em>.</div></div>
+        <div class="help-step"><span class="step-n">2</span><div><strong>Leave Redirect URIs blank ← important!</strong><br>On the <em>Settings</em> tab, look for the <em>OAuth 2 Redirect URIs</em> section — make sure it is <strong>completely empty</strong>. If there's anything listed there, delete it. This allows the auth code to appear on screen.</div></div>
+        <div class="help-step"><span class="step-n">3</span><div><strong>Set permissions</strong><br>Go to the <em>Permissions</em> tab → tick <code>files.content.read</code> and <code>files.content.write</code> → click <em>Submit</em>.</div></div>
+        <div class="help-step"><span class="step-n">4</span><div><strong>Copy your App Key and App Secret</strong><br>Go to the <em>Settings</em> tab. You'll see <strong>App key</strong> and <strong>App secret</strong> — paste both into the fields, then tap <em>Authorise with Dropbox</em>. The rest is automatic.</div></div>
+      </div>
+      <button class="btn btn-red" style="width:100%;margin-top:18px;" onclick="hideDbxGuide()">Got it</button>
+    </div>
+  </div>
 
 </div><!-- /scroll-wrap -->
 
@@ -599,6 +607,9 @@
   <button class="tab-btn" id="tab-2" onclick="switchTab(2)">
     <span class="t-icon">📸</span>Memories
   </button>
+  <button class="tab-btn" id="tab-3" onclick="switchTab(3)">
+    <span class="t-icon">⚙️</span>Settings
+  </button>
 </nav>
 
 <!-- FULLSCREEN MODAL -->
@@ -612,7 +623,7 @@
 // CONFIG
 // ════════════════════════════════════════
 const TRAVEL_DATE = new Date('2026-05-11T15:00:00').getTime();
-const TRIP_DAYS   = ['May 11','May 12','May 13','May 14','May 15','May 16','May 17','May 18'];
+const TRIP_DAYS   = ['May 11','May 12','May 13','May 14','May 15'];
 
 // ════════════════════════════════════════
 // STATE
@@ -1308,7 +1319,7 @@ function switchTab(n){
     if(locked)return;
     const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;
     if(Math.abs(dx)<50||Math.abs(dy)>Math.abs(dx)*0.8)return;
-    if(dx<0&&currentTab<2)switchTab(currentTab+1);
+    if(dx<0&&currentTab<3)switchTab(currentTab+1);
     if(dx>0&&currentTab>0)switchTab(currentTab-1);
   },{passive:true});
 })();
