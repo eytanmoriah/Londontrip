@@ -659,7 +659,7 @@ const TRIP_DAYS   = ['May 11','May 12','May 13','May 14','May 15'];
 // Travelers: array of {id, name}
 // personLists: { [travelerId]: {shopping:[], packing:[], ukShopping:[]} }
 // Shared: itinerary, notes, memories, tickets
-let travelers = [{id:'p1', name:'Person 1'}];
+let travelers = [{id:'p1', name:'Person 1', updatedAt:0}];
 let personLists = { p1: {shopping:[], packing:[], ukShopping:[]} };
 let state = { itinerary:[], notes:'', memories:[] };
 let tickets=[],deletedIds=[],tempImg=null;
@@ -733,7 +733,7 @@ async function loadLocal(){
       state      ={itinerary:old.itinerary||[],notes:old.notes||'',memories:old.memories||[]};
       tickets    =d.tickets    ||[];
       deletedIds =d.deletedIds ||[];
-      travelers  =[{id:'p1',name:'Person 1'}];
+      travelers  =[{id:'p1', name:'Person 1', updatedAt:0}];
       personLists={ p1:{ shopping:old.shopping||[], packing:old.packing||[], ukShopping:old.ukShopping||[] } };
     }catch(e){}
   }
@@ -899,7 +899,18 @@ function updateDbxUI(){
   }
 }
 
-function mergeById(a,b){
+function mergeTravelers(a, b){
+  // Keep the version of each traveler with the highest updatedAt timestamp.
+  // This ensures renames propagate correctly across all devices.
+  const map = new Map();
+  for(const t of [...(a||[]), ...(b||[])]){
+    const existing = map.get(t.id);
+    if(!existing || (t.updatedAt||0) > (existing.updatedAt||0)){
+      map.set(t.id, t);
+    }
+  }
+  return Array.from(map.values());
+}
   const dead=new Set(deletedIds.map(String));
   const seen=new Map();
   for(const t of [...(a||[]),...(b||[])]){
@@ -937,11 +948,8 @@ async function syncToCloud(){
       };
     });
 
-    // Merge travelers list
-    const cloudTravelers=cloud.travelers||[];
-    const travMap=new Map();
-    [...cloudTravelers,...travelers].forEach(t=>{ if(!travMap.has(t.id)) travMap.set(t.id,t); else travMap.set(t.id,{...travMap.get(t.id),...t}); });
-    const mergedTravelers=Array.from(travMap.values());
+    // Merge travelers — timestamp-aware so renames propagate correctly
+    const mergedTravelers = mergeTravelers(cloud.travelers||[], travelers);
 
     const payload={
       itinerary:mI, notes:state.notes,
@@ -987,11 +995,9 @@ async function syncFromCloud(){
     tickets       =mergeById(data.tickets ||[],tickets);
     state.memories=mergeById(data.memories||[],state.memories).filter(m=>!dead.has(String(m.id)));
 
-    // Merge travelers
+    // Merge travelers — timestamp-aware so renames propagate correctly
     if(data.travelers&&data.travelers.length){
-      const travMap=new Map();
-      [...data.travelers,...travelers].forEach(t=>{ if(!travMap.has(t.id)) travMap.set(t.id,t); else travMap.set(t.id,{...travMap.get(t.id),...t}); });
-      travelers=Array.from(travMap.values());
+      travelers = mergeTravelers(data.travelers, travelers);
     }
 
     // Merge per-traveler lists
@@ -1380,6 +1386,7 @@ function renameTraveler(id,name){
   const t=travelers.find(t=>t.id===id);
   if(!t||!name.trim())return;
   t.name=name.trim();
+  t.updatedAt=Date.now(); // timestamp so other devices know this is newer
   renderTravelerTabs();
   renderTravelerSettings();
   saveAndSync();
@@ -1387,7 +1394,7 @@ function renameTraveler(id,name){
 function addTraveler(){
   const id='p'+Date.now();
   const n=travelers.length+1;
-  travelers.push({id,name:'Person '+n});
+  travelers.push({id, name:'Person '+n, updatedAt:Date.now()});
   personLists[id]=defaultPersonLists(id);
   renderTravelerSettings();
   renderTravelerTabs();
@@ -1422,6 +1429,7 @@ function render(){
       </div>`).join('');
   });
   renderTravelerTabs();
+  renderTravelerSettings();
   renderItinerary();
   renderNotes();
 }
