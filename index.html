@@ -527,19 +527,18 @@
       <div class="tab-pnl">
 
         <div class="glass" style="padding:14px 18px;" id="dbxCard">
-          <!-- Connected state -->
-          <div id="dbxConnected" style="display:none;align-items:center;justify-content:space-between;">
+          <!-- Connected state (always shown — credentials are baked in) -->
+          <div id="dbxConnected" style="display:flex;align-items:center;justify-content:space-between;">
             <div>
               <div style="font-size:0.85rem;font-weight:600;">☁️ Dropbox Connected</div>
               <div style="font-size:0.72rem;opacity:0.5;margin-top:2px;">Auto-refreshing · never expires</div>
             </div>
             <div style="display:flex;gap:8px;">
               <button class="btn btn-glass btn-icon" onclick="syncFromCloud()" title="Sync now">🔄</button>
-              <button class="btn btn-glass btn-sm" onclick="showDbxSetup()">Change</button>
             </div>
           </div>
-          <!-- Setup state: step 1 — App Key + Secret -->
-          <div id="dbxSetup">
+          <!-- Setup state (hidden — only shown if credentials somehow missing) -->
+          <div id="dbxSetup" style="display:none;">
             <div style="font-size:0.85rem;font-weight:600;margin-bottom:4px;">☁️ Connect Dropbox Sync</div>
             <div style="font-size:0.78rem;opacity:0.55;margin-bottom:12px;">One-time setup · takes ~3 minutes</div>
             <div class="input-row" style="margin-bottom:8px;">
@@ -549,7 +548,7 @@
             <button class="btn btn-red" style="width:100%;margin-bottom:8px;" onclick="dbxStartAuth()">Authorise with Dropbox →</button>
             <div style="font-size:0.75rem;opacity:0.45;text-align:center;">Don't have these yet? <span style="color:var(--red);cursor:pointer;text-decoration:underline;" onclick="showDbxGuide()">See setup guide ↗</span></div>
           </div>
-          <!-- Setup state: step 2 — paste auth code -->
+          <!-- Step 2: paste auth code (hidden by default) -->
           <div id="dbxCodeStep" style="display:none;">
             <div style="font-size:0.85rem;font-weight:600;margin-bottom:6px;">Step 2 — Paste the code</div>
             <div style="font-size:0.78rem;opacity:0.6;margin-bottom:12px;">A Dropbox page opened in a new tab. After clicking <strong>Allow</strong>, copy the code shown and paste it here:</div>
@@ -1340,21 +1339,28 @@ function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
 
 // ════════════════════════════════════════
 // STARTUP
+// Credentials baked in — all users connect automatically
 // ════════════════════════════════════════
+const BAKED={key:'dhaxav6kgyv59s3',secret:'jx3btsvykf9e022',refresh:'zEyxwmPkDiIAAAAAAAFQTMuIPf78UwRk2biV9lu8rOU'};
+
 openDB().then(async()=>{
+  // Seed credentials for every user automatically
+  localStorage.setItem('dbx_key',    BAKED.key);
+  localStorage.setItem('dbx_secret', BAKED.secret);
+  localStorage.setItem('dbx_refresh',BAKED.refresh);
+
   await loadLocal();
   buildDayTabs();
   fetchWeather();
   checkArrived();
   updateCD();
   updateDbxUI();
-  if(hasDbxCredentials()) syncFromCloud();
+  syncFromCloud();
   if('Notification' in window&&Notification.permission==='granted')
     document.getElementById('notifStatus').textContent='Alerts: Active ✅';
   setInterval(updateCD,1000);
   setInterval(checkNotif,60000*15);
-  // Auto-sync every 30s
-  setInterval(()=>{ if(hasDbxCredentials()&&!syncing) syncFromCloud(); },30000);
+  setInterval(()=>{ if(!syncing) syncFromCloud(); },30000);
 });
 </script>
 </body>
