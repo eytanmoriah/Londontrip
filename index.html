@@ -393,48 +393,60 @@
     </div>
   </div>
 
-  <!-- Dropbox connection -->
+  <!-- Dropbox connection card -->
   <div class="glass" style="padding:14px 18px;" id="dbxCard">
+    <!-- Connected state -->
     <div id="dbxConnected" style="display:none;align-items:center;justify-content:space-between;">
       <div>
         <div style="font-size:0.85rem;font-weight:600;">☁️ Dropbox Connected</div>
-        <div style="font-size:0.72rem;opacity:0.5;margin-top:2px;">Auto-refreshing token · never expires</div>
+        <div style="font-size:0.72rem;opacity:0.5;margin-top:2px;">Auto-refreshing · never expires</div>
       </div>
       <div style="display:flex;gap:8px;">
         <button class="btn btn-glass btn-icon" onclick="syncFromCloud()" title="Sync now">🔄</button>
         <button class="btn btn-glass btn-sm" onclick="showDbxSetup()">Change</button>
       </div>
     </div>
+    <!-- Setup state: step 1 — App Key + Secret -->
     <div id="dbxSetup">
-      <div style="font-size:0.8rem;opacity:0.6;margin-bottom:10px;">Enter your Dropbox App Key, App Secret and Refresh Token — <span style="color:var(--red);cursor:pointer;" onclick="showDbxHelp()">How do I get these? ↗</span></div>
+      <div style="font-size:0.85rem;font-weight:600;margin-bottom:4px;">☁️ Connect Dropbox Sync</div>
+      <div style="font-size:0.78rem;opacity:0.55;margin-bottom:12px;">One-time setup · takes ~3 minutes</div>
       <div class="input-row" style="margin-bottom:8px;">
-        <input type="text" id="dbxKey"     placeholder="App Key"     autocomplete="off" autocorrect="off" spellcheck="false">
-        <input type="text" id="dbxSecret"  placeholder="App Secret"  autocomplete="off" autocorrect="off" spellcheck="false">
+        <input type="text" id="dbxKey"    placeholder="App Key"    autocomplete="off" spellcheck="false" style="font-family:monospace;font-size:0.85rem;">
+        <input type="text" id="dbxSecret" placeholder="App Secret" autocomplete="off" spellcheck="false" style="font-family:monospace;font-size:0.85rem;">
       </div>
-      <div class="input-row" style="margin-bottom:10px;">
-        <input type="text" id="dbxRefresh" placeholder="Refresh Token" autocomplete="off" autocorrect="off" spellcheck="false">
+      <button class="btn btn-red" style="width:100%;margin-bottom:8px;" onclick="dbxStartAuth()">Authorise with Dropbox →</button>
+      <div style="font-size:0.75rem;opacity:0.45;text-align:center;">Don't have these yet? <span style="color:var(--red);cursor:pointer;text-decoration:underline;" onclick="showDbxGuide()">See setup guide ↗</span></div>
+    </div>
+    <!-- Setup state: step 2 — paste auth code -->
+    <div id="dbxCodeStep" style="display:none;">
+      <div style="font-size:0.85rem;font-weight:600;margin-bottom:6px;">Step 2 — Paste the code</div>
+      <div style="font-size:0.78rem;opacity:0.6;margin-bottom:12px;">A Dropbox page opened in a new tab. After clicking <strong>Allow</strong>, copy the code shown and paste it here:</div>
+      <div class="input-row" style="margin-bottom:8px;">
+        <input type="text" id="dbxAuthCode" placeholder="Paste authorisation code here" autocomplete="off" spellcheck="false" style="font-family:monospace;font-size:0.85rem;" onkeydown="if(event.key==='Enter')dbxExchangeCode()">
       </div>
-      <button class="btn btn-red" style="width:100%;" onclick="saveDbxCredentials()">Connect Dropbox</button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-red" style="flex:1;" onclick="dbxExchangeCode()">Finish Setup</button>
+        <button class="btn btn-glass" onclick="dbxCancelAuth()">Back</button>
+      </div>
+      <div id="dbxCodeError" style="display:none;margin-top:10px;font-size:0.78rem;color:#ff6b6b;"></div>
     </div>
   </div>
 
-  <!-- Dropbox setup help modal -->
-  <div id="dbxHelpModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:500;overflow-y:auto;padding:20px;">
-    <div style="max-width:600px;margin:0 auto;background:rgba(20,20,40,0.98);border:1px solid var(--glass-border);border-radius:20px;padding:24px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
-        <h3 style="font-family:'Playfair Display',serif;">Setting Up Dropbox Sync</h3>
-        <button onclick="hideDbxHelp()" style="background:none;border:none;color:white;font-size:1.4rem;cursor:pointer;opacity:0.6;">✕</button>
+  <!-- Dropbox setup guide modal -->
+  <div id="dbxGuideModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:500;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:20px 16px;">
+    <div style="max-width:560px;margin:0 auto;background:rgba(18,18,38,0.99);border:1px solid var(--glass-border);border-radius:20px;padding:24px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h3 style="font-family:'Playfair Display',serif;font-size:1.1rem;">Dropbox Setup Guide</h3>
+        <button onclick="hideDbxGuide()" style="background:none;border:none;color:white;font-size:1.5rem;cursor:pointer;opacity:0.5;line-height:1;">✕</button>
       </div>
-      <div style="font-size:0.88rem;line-height:1.7;opacity:0.85;">
-        <p style="margin-bottom:14px;">You need to create a free Dropbox developer app once. It takes about 3 minutes and you never need to repeat it.</p>
-        <div class="help-step"><span class="step-n">1</span><div><strong>Create a Dropbox App</strong><br>Go to <a href="https://www.dropbox.com/developers/apps" target="_blank" style="color:#DC143C;">dropbox.com/developers/apps</a> → click <em>Create app</em> → choose <em>Scoped access</em> → <em>App folder</em> → give it any name (e.g. "LondonTrip") → click <em>Create app</em>.</div></div>
-        <div class="help-step"><span class="step-n">2</span><div><strong>Set permissions</strong><br>In the <em>Permissions</em> tab, check: <code>files.content.read</code> and <code>files.content.write</code>. Click <em>Submit</em>.</div></div>
-        <div class="help-step"><span class="step-n">3</span><div><strong>Get your App Key &amp; Secret</strong><br>Go to the <em>Settings</em> tab. Copy your <strong>App key</strong> and <strong>App secret</strong> — paste them below.</div></div>
-        <div class="help-step"><span class="step-n">4</span><div><strong>Get a Refresh Token (one-time)</strong><br>Open this URL in your browser (replace <code>YOUR_APP_KEY</code>):<br><code style="word-break:break-all;font-size:0.8rem;background:rgba(255,255,255,0.08);padding:6px 8px;border-radius:6px;display:block;margin:8px 0;">https://www.dropbox.com/oauth2/authorize?client_id=YOUR_APP_KEY&token_access_type=offline&response_type=code</code>Click <em>Allow</em>. You'll see a code on the next page — copy it.</div></div>
-        <div class="help-step"><span class="step-n">5</span><div><strong>Exchange code for Refresh Token</strong><br>Run this in your terminal (or use an online curl tool):<br><code style="word-break:break-all;font-size:0.78rem;background:rgba(255,255,255,0.08);padding:6px 8px;border-radius:6px;display:block;margin:8px 0;">curl https://api.dropbox.com/oauth2/token -d code=YOUR_CODE -d grant_type=authorization_code -u YOUR_APP_KEY:YOUR_APP_SECRET</code>Copy the <strong>refresh_token</strong> value from the response.</div></div>
-        <div class="help-step"><span class="step-n">6</span><div><strong>Paste all three into the app</strong><br>Enter your App Key, App Secret, and Refresh Token above, then tap <em>Connect Dropbox</em>. Done — it never expires!</div></div>
+      <div style="font-size:0.85rem;line-height:1.75;opacity:0.88;">
+        <p style="margin-bottom:14px;opacity:0.65;">Do this once — then the app handles everything automatically forever.</p>
+        <div class="help-step"><span class="step-n">1</span><div><strong>Create a Dropbox App</strong><br>Go to <a href="https://www.dropbox.com/developers/apps" target="_blank" style="color:#DC143C;">dropbox.com/developers/apps</a> → <em>Create app</em> → <em>Scoped access</em> → <em>App folder</em> → any name (e.g. "LondonTrip") → <em>Create app</em>.</div></div>
+        <div class="help-step"><span class="step-n">2</span><div><strong>Leave Redirect URIs blank ← important!</strong><br>On the <em>Settings</em> tab, look for the <em>OAuth 2 Redirect URIs</em> section — make sure it is <strong>completely empty</strong>. If there's anything listed there, delete it. This is what allows the auth code to appear on screen instead of redirecting.</div></div>
+        <div class="help-step"><span class="step-n">3</span><div><strong>Set permissions</strong><br>Go to the <em>Permissions</em> tab → tick <code>files.content.read</code> and <code>files.content.write</code> → click <em>Submit</em>.</div></div>
+        <div class="help-step"><span class="step-n">4</span><div><strong>Copy your App Key and App Secret</strong><br>Go to the <em>Settings</em> tab. You'll see <strong>App key</strong> and <strong>App secret</strong> — paste both into the fields above, then tap <em>Authorise with Dropbox</em>. The rest is automatic.</div></div>
       </div>
-      <button class="btn btn-red" style="width:100%;margin-top:16px;" onclick="hideDbxHelp()">Got it</button>
+      <button class="btn btn-red" style="width:100%;margin-top:18px;" onclick="hideDbxGuide()">Got it</button>
     </div>
   </div>
 
@@ -673,8 +685,12 @@ async function loadLocal(){
 // DROPBOX
 // ════════════════════════════════════════
 // ════════════════════════════════════════
-// DROPBOX — refresh token system
-// Short-lived access tokens auto-refreshed using the stored refresh token.
+// DROPBOX — built-in OAuth wizard
+// Step 1: user enters App Key + Secret, clicks "Authorise"
+//   → app opens Dropbox auth page in new tab
+//   → app shows code-paste step
+// Step 2: user pastes code, app exchanges it for refresh token silently
+// After setup: app auto-refreshes the access token forever
 // ════════════════════════════════════════
 const dbx={
   up:(tok,path,body)=>fetch('https://content.dropboxapi.com/2/files/upload',{
@@ -696,74 +712,126 @@ const dbx={
   })
 };
 
-// Cached short-lived access token + its expiry timestamp
 let cachedToken=null, tokenExpiry=0;
 
 async function getAccessToken(){
-  // Return cached token if still valid (with 60s buffer)
-  if(cachedToken && Date.now() < tokenExpiry - 60000) return cachedToken;
-
-  const key    = localStorage.getItem('dbx_key');
-  const secret = localStorage.getItem('dbx_secret');
-  const refresh= localStorage.getItem('dbx_refresh');
+  if(cachedToken && Date.now() < tokenExpiry-60000) return cachedToken;
+  const key=localStorage.getItem('dbx_key');
+  const secret=localStorage.getItem('dbx_secret');
+  const refresh=localStorage.getItem('dbx_refresh');
   if(!key||!secret||!refresh) return null;
-
   try{
-    const body=new URLSearchParams({
-      grant_type:'refresh_token',
-      refresh_token:refresh,
-      client_id:key,
-      client_secret:secret
-    });
     const r=await fetch('https://api.dropbox.com/oauth2/token',{
       method:'POST',
       headers:{'Content-Type':'application/x-www-form-urlencoded'},
-      body
+      body:new URLSearchParams({grant_type:'refresh_token',refresh_token:refresh,client_id:key,client_secret:secret})
     });
-    if(!r.ok){ setStatus('☁️ Auth Error ❌'); return null; }
-    const data=await r.json();
-    cachedToken  = data.access_token;
-    tokenExpiry  = Date.now() + (data.expires_in||14400)*1000;
+    if(!r.ok){setStatus('☁️ Auth Error ❌');return null;}
+    const d=await r.json();
+    cachedToken=d.access_token;
+    tokenExpiry=Date.now()+(d.expires_in||14400)*1000;
     return cachedToken;
-  }catch(e){
-    setStatus('☁️ Auth Failed ❌'); return null;
-  }
+  }catch(e){setStatus('☁️ Auth Failed ❌');return null;}
 }
 
 function hasDbxCredentials(){
-  return !!(localStorage.getItem('dbx_key') &&
-            localStorage.getItem('dbx_secret') &&
-            localStorage.getItem('dbx_refresh'));
+  return !!(localStorage.getItem('dbx_key')&&localStorage.getItem('dbx_secret')&&localStorage.getItem('dbx_refresh'));
 }
 
+// ── Wizard UI ──
 function showDbxSetup(){
   document.getElementById('dbxConnected').style.display='none';
   document.getElementById('dbxSetup').style.display='block';
+  document.getElementById('dbxCodeStep').style.display='none';
 }
-function showDbxHelp(){ document.getElementById('dbxHelpModal').style.display='block'; }
-function hideDbxHelp(){ document.getElementById('dbxHelpModal').style.display='none'; }
+function showDbxGuide(){ document.getElementById('dbxGuideModal').style.display='block'; }
+function hideDbxGuide(){ document.getElementById('dbxGuideModal').style.display='none'; }
 
-function saveDbxCredentials(){
-  const key    =document.getElementById('dbxKey').value.trim();
-  const secret =document.getElementById('dbxSecret').value.trim();
-  const refresh=document.getElementById('dbxRefresh').value.trim();
-  if(!key||!secret||!refresh){alert('Please fill in all three fields.');return;}
-  localStorage.setItem('dbx_key',key);
-  localStorage.setItem('dbx_secret',secret);
-  localStorage.setItem('dbx_refresh',refresh);
-  // Clear cached token so it gets refreshed immediately
-  cachedToken=null; tokenExpiry=0;
-  updateDbxUI();
-  syncFromCloud();
+function dbxStartAuth(){
+  const key=document.getElementById('dbxKey').value.trim();
+  const secret=document.getElementById('dbxSecret').value.trim();
+  if(!key||!secret){ alert('Please enter both your App Key and App Secret first.'); return; }
+  // Save temporarily (not committed until exchange succeeds)
+  sessionStorage.setItem('dbx_key_tmp',key);
+  sessionStorage.setItem('dbx_secret_tmp',secret);
+  // Build the exact OAuth URL Dropbox requires for offline (refresh token) access
+  const authUrl='https://www.dropbox.com/oauth2/authorize'
+    +'?client_id='+encodeURIComponent(key)
+    +'&response_type=code'
+    +'&token_access_type=offline';
+  window.open(authUrl,'_blank');
+  // Show step 2
+  document.getElementById('dbxSetup').style.display='none';
+  document.getElementById('dbxCodeStep').style.display='block';
+  document.getElementById('dbxAuthCode').focus();
+  document.getElementById('dbxCodeError').style.display='none';
+}
+
+function dbxCancelAuth(){
+  document.getElementById('dbxCodeStep').style.display='none';
+  document.getElementById('dbxSetup').style.display='block';
+}
+
+async function dbxExchangeCode(){
+  const code=document.getElementById('dbxAuthCode').value.trim();
+  if(!code){ alert('Please paste the authorisation code from the Dropbox page.'); return; }
+  const key=sessionStorage.getItem('dbx_key_tmp');
+  const secret=sessionStorage.getItem('dbx_secret_tmp');
+  if(!key||!secret){ dbxCancelAuth(); return; }
+
+  const errEl=document.getElementById('dbxCodeError');
+  errEl.style.display='none';
+  const btn=document.querySelector('#dbxCodeStep .btn-red');
+  btn.textContent='Connecting…'; btn.disabled=true;
+
+  try{
+    // Exchange auth code for access token + refresh token
+    // Must use basic auth (key:secret) — CORS is allowed by Dropbox for this endpoint
+    const r=await fetch('https://api.dropbox.com/oauth2/token',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/x-www-form-urlencoded',
+        'Authorization':'Basic '+btoa(key+':'+secret)
+      },
+      body:new URLSearchParams({code,grant_type:'authorization_code'})
+    });
+    const d=await r.json();
+    if(!r.ok||!d.refresh_token){
+      const msg=d.error_description||d.error||'Unknown error';
+      errEl.textContent='❌ '+msg+' — check the code is correct and was not already used.';
+      errEl.style.display='block';
+      btn.textContent='Finish Setup'; btn.disabled=false;
+      return;
+    }
+    // Success — commit credentials
+    localStorage.setItem('dbx_key',key);
+    localStorage.setItem('dbx_secret',secret);
+    localStorage.setItem('dbx_refresh',d.refresh_token);
+    sessionStorage.removeItem('dbx_key_tmp');
+    sessionStorage.removeItem('dbx_secret_tmp');
+    // Cache the access token we just got
+    cachedToken=d.access_token;
+    tokenExpiry=Date.now()+(d.expires_in||14400)*1000;
+    // Clear input
+    document.getElementById('dbxAuthCode').value='';
+    updateDbxUI();
+    syncFromCloud();
+  }catch(e){
+    errEl.textContent='❌ Network error — check your internet connection and try again.';
+    errEl.style.display='block';
+    btn.textContent='Finish Setup'; btn.disabled=false;
+  }
 }
 
 function updateDbxUI(){
   if(hasDbxCredentials()){
     document.getElementById('dbxConnected').style.display='flex';
     document.getElementById('dbxSetup').style.display='none';
+    document.getElementById('dbxCodeStep').style.display='none';
   }else{
     document.getElementById('dbxConnected').style.display='none';
     document.getElementById('dbxSetup').style.display='block';
+    document.getElementById('dbxCodeStep').style.display='none';
   }
 }
 
