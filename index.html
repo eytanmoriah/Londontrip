@@ -618,6 +618,12 @@
           <div id="notifStatus" style="font-size:0.75rem;opacity:0.5;margin-top:8px;text-align:center;">Alerts: Off</div>
         </div>
 
+        <div class="glass" style="padding:14px 18px;">
+          <div style="font-size:0.85rem;font-weight:600;margin-bottom:6px;">⚠️ Danger Zone</div>
+          <div style="font-size:0.78rem;opacity:0.55;margin-bottom:12px;">Wipe everything and start fresh. Clears all travelers, lists, itinerary and notes on <strong>all devices</strong>.</div>
+          <button class="btn btn-glass" style="width:100%;border-color:rgba(220,20,60,0.5);color:rgba(255,100,100,0.9);" onclick="resetApp()">🗑️ Reset App to Defaults</button>
+        </div>
+
       </div>
 
     </div><!-- /tabs-sl -->
@@ -681,7 +687,7 @@ const TRIP_DAYS   = ['May 11','May 12','May 13','May 14','May 15'];
 let travelers = [{id:'p1', name:'Person 1', updatedAt:0}];
 let personLists = { p1: {shopping:[], packing:[], ukShopping:[]} };
 let state = { itinerary:[], notes:'', memories:[] };
-let tickets=[],deletedIds=[],tempImg=null;
+let tickets=[],deletedIds=[],deletedTravelers=[],tempImg=null;
 let activeDay=0, activeTraveler='p1', currentTab=0, confettiFired=false;
 let syncing=false, syncTimer=null;
 
@@ -726,7 +732,7 @@ const idb={
 // LOCAL STORAGE
 // ════════════════════════════════════════
 function saveLocal(){
-  try{localStorage.setItem('ldn_v11',JSON.stringify({state,tickets,deletedIds,travelers,personLists}));}catch(e){}
+  try{localStorage.setItem('ldn_v11',JSON.stringify({state,tickets,deletedIds,deletedTravelers,travelers,personLists}));}catch(e){}
 }
 function defaultPersonLists(id){ return {shopping:[],packing:[],ukShopping:[],shoppingDeleted:[]}; }
 async function loadLocal(){
@@ -736,11 +742,12 @@ async function loadLocal(){
   if(raw11){
     try{
       const d=JSON.parse(raw11);
-      state      ={itinerary:[],notes:'',memories:[],...d.state};
-      tickets    =d.tickets    ||[];
-      deletedIds =d.deletedIds ||[];
-      travelers  =d.travelers  ||[{id:'p1',name:'Person 1'}];
-      personLists=d.personLists||{};
+      state           ={itinerary:[],notes:'',memories:[],...d.state};
+      tickets         =d.tickets          ||[];
+      deletedIds      =d.deletedIds       ||[];
+      deletedTravelers=d.deletedTravelers ||[];
+      travelers       =d.travelers        ||[{id:'p1',name:'Person 1',updatedAt:0}];
+      personLists     =d.personLists      ||{};
       // Ensure every traveler has a list object
       travelers.forEach(t=>{ if(!personLists[t.id]) personLists[t.id]=defaultPersonLists(t.id); });
     }catch(e){}
@@ -949,9 +956,11 @@ function mergeList(a, b, extraDead){
 }
 
 function mergeTravelers(a,b){
-  // Always keep the version with the highest updatedAt — so renames propagate correctly
+  // Combine tombstones from both sides first
+  const dead=new Set([...deletedTravelers]);
   const map=new Map();
   for(const t of [...(a||[]),...(b||[])]){
+    if(dead.has(t.id)) continue; // permanently deleted
     const existing=map.get(t.id);
     if(!existing||(t.updatedAt||0)>(existing.updatedAt||0)) map.set(t.id,t);
   }
@@ -968,6 +977,8 @@ async function syncToCloud(){
     let cloud={};
     try{const r=await dbx.down(tok,'/trip_data.json');if(r.ok)cloud=await r.json();}catch(e){}
     deletedIds=[...new Set([...deletedIds,...(cloud.deletedIds||[])].map(String))];
+    // Merge traveler tombstones from both sides before calling mergeTravelers
+    deletedTravelers=[...new Set([...deletedTravelers,...(cloud.deletedTravelers||[])])];
     const mT=mergeById(cloud.tickets  ||[],tickets);
     const mM=mergeById(cloud.memories ||[],state.memories);
     const mI=mergeById(cloud.itinerary||[],state.itinerary);
@@ -975,7 +986,8 @@ async function syncToCloud(){
     // Merge per-traveler lists
     const cloudPL = cloud.personLists||{};
     const mergedPL={};
-    const allTravIds=[...new Set([...Object.keys(personLists),...Object.keys(cloudPL)])];
+    const allTravIds=[...new Set([...Object.keys(personLists),...Object.keys(cloudPL)])]
+      .filter(tid=>!deletedTravelers.includes(tid)); // skip tombstoned travelers
     allTravIds.forEach(tid=>{
       const local=personLists[tid]||defaultPersonLists(tid);
       const remote=cloudPL[tid]||defaultPersonLists(tid);
@@ -998,7 +1010,8 @@ async function syncToCloud(){
       personLists:mergedPL,
       tickets: mT.map(t=>({id:t.id,name:t.name})),
       memories:mM.map(m=>({id:m.id,caption:m.caption})),
-      deletedIds
+      deletedIds,
+      deletedTravelers
     };
     const res=await dbx.up(tok,'/trip_data.json',JSON.stringify(payload));
     if(!res.ok){setStatus('☁️ Upload Error ❌');syncing=false;return;}
@@ -1030,6 +1043,8 @@ async function syncFromCloud(){
     if(!res.ok){setStatus('☁️ No cloud data yet');syncing=false;return;}
     const data=await res.json();
     deletedIds=[...new Set([...deletedIds,...(data.deletedIds||[])].map(String))];
+    // Merge traveler tombstones so deletes from any device propagate everywhere
+    deletedTravelers=[...new Set([...deletedTravelers,...(data.deletedTravelers||[])])];
     const dead=new Set(deletedIds);
 
     if(data.itinerary) state.itinerary=mergeById(data.itinerary,state.itinerary);
@@ -1452,9 +1467,11 @@ function addTraveler(){
 }
 function removeTraveler(id){
   if(travelers.length<=1){alert("Can't remove the last traveler.");return;}
-  if(!confirm('Remove this traveler and all their lists?'))return;
+  if(!confirm('Remove this traveler and all their lists? This cannot be undone.'))return;
   travelers=travelers.filter(t=>t.id!==id);
   delete personLists[id];
+  // Tombstone — prevents this traveler bouncing back from cloud on next sync
+  deletedTravelers=[...new Set([...deletedTravelers, id])];
   if(activeTraveler===id) activeTraveler=travelers[0].id;
   renderTravelerSettings();
   render();
@@ -1486,6 +1503,44 @@ function render(){
 // ════════════════════════════════════════
 // NOTIFICATIONS — FIX 9: feature-detect
 // ════════════════════════════════════════
+async function resetApp(){
+  if(!confirm('Reset everything?\n\nThis will permanently delete ALL travelers, lists, itinerary, notes and sync data on ALL devices. This cannot be undone.')) return;
+  if(!confirm('Are you sure? This deletes everything on all devices permanently.')) return;
+  // Reset all state
+  travelers        = [{id:'p1', name:'Person 1', updatedAt:0}];
+  personLists      = { p1: defaultPersonLists('p1') };
+  state            = { itinerary:[], notes:'', memories:[] };
+  tickets          = [];
+  deletedIds       = [];
+  deletedTravelers = [];
+  activeTraveler   = 'p1';
+  // Clear localStorage
+  localStorage.removeItem('ldn_v11');
+  localStorage.removeItem('ldn_v10');
+  localStorage.removeItem('ldn_v9');
+  saveLocal();
+  // Wipe Dropbox cloud file
+  const tok = await getAccessToken();
+  if(tok){
+    try{
+      const empty = {
+        travelers:[{id:'p1',name:'Person 1',updatedAt:0}],
+        personLists:{p1:defaultPersonLists('p1')},
+        itinerary:[],notes:'',tickets:[],memories:[],
+        deletedIds:[],deletedTravelers:[]
+      };
+      await dbx.up(tok,'/trip_data.json',JSON.stringify(empty));
+      setStatus('☁️ Reset complete ✅');
+    }catch(e){ setStatus('☁️ Local reset done — cloud may need manual clear'); }
+  }
+  render();
+  renderTravelerSettings();
+  renderTravelerTabs();
+  await renderTickets();
+  await renderMemories();
+  alert('App reset to defaults. All travelers and data cleared.');
+}
+
 function requestNotifPermission(){
   if(!('Notification' in window)){alert('Notifications not supported in this browser.');return;}
   Notification.requestPermission().then(p=>{
